@@ -7,7 +7,8 @@ from data.config import (
     START_JAHR,
     START_QUARTAL,
     STANDARD_EINKAUFSPREIS_MATERIAL_PRO_LOS,
-    STANDARD_FERTIGUNGSKOSTEN_PRO_LOS,
+    STANDARD_ENDMONTAGEKOSTEN_STUFE_2_PRO_LOS,
+    STANDARD_FERTIGUNGSKOSTEN_STUFE_1_PRO_LOS,
     STANDARD_GEMEINKOSTEN_JAHR_1_PRO_QUARTAL,
     STANDARD_ZINSSATZ,
 )
@@ -69,7 +70,8 @@ class GameState:
     absatzmenge_plan: int = 0
     absatzmenge_ist: int = 0
     einkaufspreis_material: float = STANDARD_EINKAUFSPREIS_MATERIAL_PRO_LOS
-    fertigungskosten_pro_los: float = STANDARD_FERTIGUNGSKOSTEN_PRO_LOS
+    fertigungskosten_pro_los: float = STANDARD_FERTIGUNGSKOSTEN_STUFE_1_PRO_LOS
+    endmontagekosten_stufe_2_pro_los: float = STANDARD_ENDMONTAGEKOSTEN_STUFE_2_PRO_LOS
     variable_gemeinkosten: float = 0.0
 
     # -----------------------------
@@ -95,7 +97,9 @@ class GameState:
         if self.einkaufspreis_material == 0.0:
             self.einkaufspreis_material = STANDARD_EINKAUFSPREIS_MATERIAL_PRO_LOS
         if self.fertigungskosten_pro_los == 0.0:
-            self.fertigungskosten_pro_los = STANDARD_FERTIGUNGSKOSTEN_PRO_LOS
+            self.fertigungskosten_pro_los = STANDARD_FERTIGUNGSKOSTEN_STUFE_1_PRO_LOS
+        if self.endmontagekosten_stufe_2_pro_los == 0.0:
+            self.endmontagekosten_stufe_2_pro_los = STANDARD_ENDMONTAGEKOSTEN_STUFE_2_PRO_LOS
         if self.zinssatz == 0.0:
             self.zinssatz = STANDARD_ZINSSATZ
 
@@ -160,6 +164,7 @@ class GameState:
             "absatzmenge_ist": self.absatzmenge_ist,
             "einkaufspreis_material": self.einkaufspreis_material,
             "fertigungskosten_pro_los": self.fertigungskosten_pro_los,
+            "endmontagekosten_stufe_2_pro_los": self.endmontagekosten_stufe_2_pro_los,
             "variable_gemeinkosten": self.variable_gemeinkosten,
             "produktionsmenge": self.produktionsmenge,
             "bestellmenge_material": self.bestellmenge_material,

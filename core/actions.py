@@ -1,4 +1,4 @@
-
+from data.config import MAX_UNFERTIGE_ERZEUGNISSE
 
 from core.calculations import (
     berechne_fertigungskosten,
@@ -47,34 +47,72 @@ def material_einkaufen(state: GameState, menge: float) -> None:
 
 
 # =========================================================
-# Produktion
+# Produktion Stufe 1
 # =========================================================
 
-def produktion_durchfuehren(state: GameState, menge: float) -> None:
-    """Verarbeitet Rohmaterial zu fertigen Erzeugnissen und bucht die Fertigungskosten pro Los."""
+def produktion_stufe_1(state: GameState, menge: float) -> None:
+    """Verarbeitet Rohmaterial zu unfertigen Erzeugnissen und bucht die Fertigungskosten der Stufe 1."""
     if not ist_positive_menge(menge):
-        raise ValueError("Die Produktionsmenge muss größer als 0 sein.")
+        raise ValueError("Die Produktionsmenge der Stufe 1 muss größer als 0 sein.")
 
     if not produktionsmenge_im_bereich(menge):
-        raise ValueError("Die Produktionsmenge liegt außerhalb des erlaubten Bereichs.")
+        raise ValueError("Die Produktionsmenge der Stufe 1 liegt außerhalb des erlaubten Bereichs.")
 
     if not hat_genug_rohmaterial(state.rohmaterial_lager, menge):
-        raise ValueError("Nicht genügend Rohmaterial für die Produktion vorhanden.")
+        raise ValueError("Nicht genügend Rohmaterial für die Fertigungsstufe 1 vorhanden.")
 
-    if not fertige_erzeugnisse_lager_ausreichend(state.fertige_erzeugnisse, menge):
-        raise ValueError("Nicht genügend Lagerkapazität für fertige Erzeugnisse vorhanden.")
+    if state.unfertige_erzeugnisse + menge > MAX_UNFERTIGE_ERZEUGNISSE:
+        raise ValueError("Nicht genügend Lagerkapazität für unfertige Erzeugnisse vorhanden.")
 
     kosten = berechne_fertigungskosten(menge, state.fertigungskosten_pro_los)
 
     if not hat_genug_liquiditaet(state.liquide_mittel, kosten):
-        raise ValueError("Nicht genügend liquide Mittel für die Produktion vorhanden.")
+        raise ValueError("Nicht genügend liquide Mittel für die Fertigungsstufe 1 vorhanden.")
 
     state.rohmaterial_lager -= menge
+    state.unfertige_erzeugnisse += menge
+    state.liquide_mittel -= kosten
+    state.fertigungskosten += kosten
+    state.produktionsmenge = menge
+    state.log(f"Fertigungsstufe 1 durchgeführt: {menge} Lose, Kosten {kosten:.2f}.")
+
+
+# =========================================================
+# Endmontage Stufe 2
+# =========================================================
+
+def endmontage_stufe_2(state: GameState, menge: float) -> None:
+    """Verarbeitet unfertige Erzeugnisse zu fertigen Erzeugnissen und bucht die Endmontagekosten der Stufe 2."""
+    if not ist_positive_menge(menge):
+        raise ValueError("Die Endmontagemenge der Stufe 2 muss größer als 0 sein.")
+
+    if not produktionsmenge_im_bereich(menge):
+        raise ValueError("Die Endmontagemenge der Stufe 2 liegt außerhalb des erlaubten Bereichs.")
+
+    if state.unfertige_erzeugnisse < menge:
+        raise ValueError("Nicht genügend unfertige Erzeugnisse für die Endmontage vorhanden.")
+
+    if not fertige_erzeugnisse_lager_ausreichend(state.fertige_erzeugnisse, menge):
+        raise ValueError("Nicht genügend Lagerkapazität für fertige Erzeugnisse vorhanden.")
+
+    kosten = berechne_fertigungskosten(menge, state.endmontagekosten_stufe_2_pro_los)
+
+    if not hat_genug_liquiditaet(state.liquide_mittel, kosten):
+        raise ValueError("Nicht genügend liquide Mittel für die Endmontage vorhanden.")
+
+    state.unfertige_erzeugnisse -= menge
     state.fertige_erzeugnisse += menge
     state.liquide_mittel -= kosten
     state.fertigungskosten += kosten
     state.produktionsmenge = menge
-    state.log(f"Produktion durchgeführt: {menge} Lose, Kosten {kosten:.2f}.")
+    state.log(f"Endmontage Stufe 2 durchgeführt: {menge} Lose, Kosten {kosten:.2f}.")
+
+
+# Rückwärtskompatibilität für die bisherige Test-App
+# Diese Funktion führt nun die Fertigungsstufe 1 aus.
+def produktion_durchfuehren(state: GameState, menge: float) -> None:
+    """Alias für die Fertigungsstufe 1, damit bestehende Aufrufe weiterhin funktionieren."""
+    produktion_stufe_1(state, menge)
 
 
 # =========================================================
