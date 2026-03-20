@@ -1,14 +1,25 @@
 from dataclasses import dataclass, field
 from typing import Dict, List
 
+from data.config import (
+    ENABLE_LOGGING,
+    QUARTALE_PRO_JAHR,
+    START_JAHR,
+    START_QUARTAL,
+    STANDARD_EINKAUFSPREIS_MATERIAL_PRO_LOS,
+    STANDARD_FERTIGUNGSKOSTEN_PRO_LOS,
+    STANDARD_GEMEINKOSTEN_JAHR_1_PRO_QUARTAL,
+    STANDARD_ZINSSATZ,
+)
+
 
 @dataclass
 class GameState:
     # -----------------------------
     # Zeit / Ablauf
     # -----------------------------
-    jahr: int = 1
-    quartal: int = 1
+    jahr: int = START_JAHR
+    quartal: int = START_QUARTAL
     runde: int = 1
 
     # -----------------------------
@@ -16,7 +27,7 @@ class GameState:
     # -----------------------------
     liquide_mittel: float = 0.0
     darlehen: float = 0.0
-    zinssatz: float = 0.0
+    zinssatz: float = STANDARD_ZINSSATZ
 
     # -----------------------------
     # Umlaufvermögen
@@ -44,7 +55,7 @@ class GameState:
     umsatz: float = 0.0
     materialkosten: float = 0.0
     fertigungskosten: float = 0.0
-    gemeinkosten: float = 0.0
+    gemeinkosten: float = STANDARD_GEMEINKOSTEN_JAHR_1_PRO_QUARTAL
     marketingkosten: float = 0.0
     zinskosten: float = 0.0
     abschreibungen_periode: float = 0.0
@@ -57,7 +68,8 @@ class GameState:
     verkaufspreis: float = 0.0
     absatzmenge_plan: int = 0
     absatzmenge_ist: int = 0
-    einkaufspreis_material: float = 0.0
+    einkaufspreis_material: float = STANDARD_EINKAUFSPREIS_MATERIAL_PRO_LOS
+    fertigungskosten_pro_los: float = STANDARD_FERTIGUNGSKOSTEN_PRO_LOS
     variable_gemeinkosten: float = 0.0
 
     # -----------------------------
@@ -76,13 +88,25 @@ class GameState:
     # -----------------------------
     # Hilfsmethoden
     # -----------------------------
+    def __post_init__(self) -> None:
+        """Setzt abgeleitete Startwerte nach der Initialisierung."""
+        if self.gemeinkosten == 0.0:
+            self.gemeinkosten = STANDARD_GEMEINKOSTEN_JAHR_1_PRO_QUARTAL
+        if self.einkaufspreis_material == 0.0:
+            self.einkaufspreis_material = STANDARD_EINKAUFSPREIS_MATERIAL_PRO_LOS
+        if self.fertigungskosten_pro_los == 0.0:
+            self.fertigungskosten_pro_los = STANDARD_FERTIGUNGSKOSTEN_PRO_LOS
+        if self.zinssatz == 0.0:
+            self.zinssatz = STANDARD_ZINSSATZ
+
     def log(self, text: str) -> None:
-        """Speichert ein Ereignis in der Verlaufsliste."""
-        self.verlauf.append(text)
+        """Speichert ein Ereignis in der Verlaufsliste, falls Logging aktiviert ist."""
+        if ENABLE_LOGGING:
+            self.verlauf.append(text)
 
     def naechstes_quartal(self) -> None:
-        """Springt ins nächste Quartal; nach Q4 beginnt ein neues Jahr."""
-        if self.quartal < 4:
+        """Springt ins nächste Quartal; nach dem letzten Quartal beginnt ein neues Jahr."""
+        if self.quartal < QUARTALE_PRO_JAHR:
             self.quartal += 1
         else:
             self.quartal = 1
@@ -96,7 +120,7 @@ class GameState:
         self.umsatz = 0.0
         self.materialkosten = 0.0
         self.fertigungskosten = 0.0
-        self.gemeinkosten = 0.0
+        self.gemeinkosten = STANDARD_GEMEINKOSTEN_JAHR_1_PRO_QUARTAL
         self.marketingkosten = 0.0
         self.zinskosten = 0.0
         self.abschreibungen_periode = 0.0
@@ -106,7 +130,7 @@ class GameState:
         self.bestellmenge_material = 0
         self.log("Periodenwerte wurden zurückgesetzt.")
 
-    def to_dict(self) -> Dict[str, float]:
+    def to_dict(self) -> Dict[str, int | float]:
         """Gibt den aktuellen Zustand als Dictionary zurück."""
         return {
             "jahr": self.jahr,
@@ -135,6 +159,7 @@ class GameState:
             "absatzmenge_plan": self.absatzmenge_plan,
             "absatzmenge_ist": self.absatzmenge_ist,
             "einkaufspreis_material": self.einkaufspreis_material,
+            "fertigungskosten_pro_los": self.fertigungskosten_pro_los,
             "variable_gemeinkosten": self.variable_gemeinkosten,
             "produktionsmenge": self.produktionsmenge,
             "bestellmenge_material": self.bestellmenge_material,

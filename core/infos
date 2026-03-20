@@ -1,0 +1,3 @@
+actions kommen die Funktionen für das overlay rein und rules werden überprüft
+calc berechnet alles für die funktionen
+state enthält den aktuellen spielstand mit allen daten als speicher
