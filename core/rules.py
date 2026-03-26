@@ -115,3 +115,4 @@ def rohmaterial_lager_ausreichend(aktueller_bestand: float, zugang: float) -> bo
 def fertige_erzeugnisse_lager_ausreichend(aktueller_bestand: float, zugang: float) -> bool:
     """Prüft, ob das Lager fertiger Erzeugnisse durch den Zugang nicht überfüllt wird."""
     return aktueller_bestand + zugang <= MAX_FERTIGE_ERZEUGNISSE
+
