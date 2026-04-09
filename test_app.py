@@ -64,7 +64,155 @@ def setze_rohmateriallager(state: GameState, menge: float) -> None:
 state = get_state()
 
 st.title("Planspiel – Testoberfläche")
-st.write("Diese Seite dient zur Prüfung des aktuellen GameState und der ersten Logik.")
+# -----------------------------
+# SPIELFELD LAYOUT (NEU)
+# -----------------------------
+left_panel, center_panel, right_panel = st.columns([0.5, 4, 0.5])
+
+with center_panel:
+    st.subheader("Spielfeld")
+
+    from pathlib import Path
+    image_path = Path(__file__).parent / "assets" / "factory_board.jpeg"
+
+    # SPIELFELD
+    st.image(str(image_path), width='stretch')
+
+    st.markdown("### Aktionen direkt im Spielfeld")
+
+    col_a, col_b, col_c, col_d = st.columns(4)
+
+    with col_a:
+        if st.button("🏭 Produktion"):
+            st.session_state.active_panel = "produktion"
+
+    with col_b:
+        if st.button("📦 Lager"):
+            st.session_state.active_panel = "lager"
+
+    with col_c:
+        if st.button("🚚 Vertrieb"):
+            st.session_state.active_panel = "vertrieb"
+
+    with col_d:
+        if st.button("💰 Finanzen"):
+            st.session_state.active_panel = "finanzen"
+
+    # -----------------------------
+    # AKTIVES PANEL ANZEIGEN
+    # -----------------------------
+    if "active_panel" in st.session_state:
+
+        if st.session_state.active_panel == "finanzen":
+
+            st.markdown("## 💰 Finanzübersicht")
+
+            fin_col1, fin_col2, fin_col3, fin_col4 = st.columns(4)
+
+            fin_col1.metric("Liquide Mittel", f"{state.liquide_mittel:.2f}")
+            fin_col2.metric("Darlehen", f"{state.darlehen:.2f}")
+            fin_col3.metric("Forderungen", f"{state.forderungen:.2f}")
+            fin_col4.metric("Gewinn", f"{state.gewinn:.2f}")
+
+        if st.session_state.active_panel == "produktion":
+
+            st.markdown("## 🏭 Produktion")
+
+            prod_col1, prod_col2 = st.columns(2)
+
+            with prod_col1:
+                st.write("### Fertigungsstufe 1")
+                menge_stufe_1 = st.number_input("Menge Stufe 1", min_value=0.0, step=1.0, key="prod1")
+
+                if st.button("Produktion Stufe 1 starten"):
+                    run_action(
+                        produktion_stufe_1,
+                        state,
+                        menge_stufe_1,
+                        success_message=f"Stufe 1: {menge_stufe_1} Lose produziert.",
+                    )
+
+            with prod_col2:
+                st.write("### Endmontage (Stufe 2)")
+                menge_stufe_2 = st.number_input("Menge Stufe 2", min_value=0.0, step=1.0, key="prod2")
+
+                if st.button("Endmontage starten"):
+                    run_action(
+                        endmontage_stufe_2,
+                        state,
+                        menge_stufe_2,
+                        success_message=f"Stufe 2: {menge_stufe_2} Lose fertiggestellt.",
+                    )
+
+        if st.session_state.active_panel == "vertrieb":
+
+            st.markdown("## 🚚 Vertrieb")
+
+            vertrieb_col1, vertrieb_col2 = st.columns(2)
+
+            with vertrieb_col1:
+                st.write("### Verkauf")
+
+                verkaufs_menge = st.number_input(
+                    "Menge verkaufen", min_value=0.0, step=1.0, key="vertrieb_menge"
+                )
+
+                sofortzahlung = st.checkbox("Sofortzahlung", key="vertrieb_sofort")
+
+                if st.button("Verkauf starten"):
+                    zahlungsart = "mit Sofortzahlung" if sofortzahlung else "auf Ziel"
+                    run_action(
+                        produkte_verkaufen,
+                        state,
+                        verkaufs_menge,
+                        sofortzahlung=sofortzahlung,
+                        success_message=f"{verkaufs_menge} Lose {zahlungsart} verkauft.",
+                    )
+
+            with vertrieb_col2:
+                st.write("### Preisstrategie")
+
+                neuer_preis = st.number_input(
+                    "Verkaufspreis", value=float(state.verkaufspreis), step=1.0, key="vertrieb_preis"
+                )
+
+                if st.button("Preis setzen"):
+                    run_action(
+                        setze_verkaufspreis,
+                        state,
+                        neuer_preis,
+                        success_message=f"Verkaufspreis auf {neuer_preis} gesetzt.",
+                    )
+
+        if st.session_state.active_panel == "lager":
+
+            st.markdown("## 📦 Lager")
+
+            lag_col1, lag_col2 = st.columns(2)
+
+            with lag_col1:
+                st.write("### Bestände")
+
+                st.metric("Rohmaterial", f"{state.rohmaterial_lager:.2f}")
+                st.metric("Unfertige Erzeugnisse", f"{state.unfertige_erzeugnisse:.2f}")
+                st.metric("Fertige Erzeugnisse", f"{state.fertige_erzeugnisse:.2f}")
+
+            with lag_col2:
+                st.write("### Materialbeschaffung")
+
+                einkauf_menge = st.number_input(
+                    "Material einkaufen", min_value=0.0, step=1.0, key="lager_einkauf"
+                )
+
+                if st.button("Material bestellen"):
+                    run_action(
+                        material_einkaufen,
+                        state,
+                        einkauf_menge,
+                        success_message=f"{einkauf_menge} Lose Rohmaterial eingekauft.",
+                    )
+
+st.write("Testoberfläche + Spielfeld (Integration)")
 
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Jahr", state.jahr)
