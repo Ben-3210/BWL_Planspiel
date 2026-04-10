@@ -1,5 +1,8 @@
+import io
+
 import pandas as pd
 import streamlit as st
+from PIL import Image, ImageDraw, ImageFont
 
 from core.actions import (
     endmontage_stufe_2,
@@ -10,6 +13,50 @@ from core.actions import (
 from core.state import GameState
 
 st.set_page_config(page_title="Factory Planspiel", layout="wide")
+
+
+# -----------------------------
+# SPIELFELD-OVERLAY
+# -----------------------------
+
+# Koordinaten (x, y) der Sechsecke auf dem Bild (1557x957px).
+# Jeweils das erste Sechseck im Bereich wird beschriftet.
+_OVERLAY_FONT_SIZE = 34
+_OVERLAY_COLOR = (0, 0, 0)  # schwarz
+
+_OVERLAY_POSITIONS = {
+    "rohmaterial_lager":      (200, 140),   # Materiallager (oben links)
+    "unfertige_erzeugnisse":  (490, 140),   # Fertigungsstufe 1
+    "fertige_erzeugnisse":    (1095, 140),  # Fertigwarenlager (oben rechts)
+    "liquide_mittel":         (385, 730),   # Kasse + Bankguthaben
+    "forderungen":            (725, 730),   # Forderungen
+}
+
+
+def _load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+    try:
+        return ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", size)
+    except OSError:
+        return ImageFont.load_default()
+
+
+def draw_board_overlay(state: "GameState", image_path: str) -> bytes:
+    """Öffnet das Spielfeldbild und beschriftet die Sechseck-Felder mit aktuellen Beständen."""
+    img = Image.open(image_path).copy()
+    draw = ImageDraw.Draw(img)
+    font = _load_font(_OVERLAY_FONT_SIZE)
+
+    for field, (x, y) in _OVERLAY_POSITIONS.items():
+        value = getattr(state, field, 0)
+        text = str(int(value)) if value == int(value) else f"{value:.1f}"
+        # Weißer Schatten für Lesbarkeit
+        draw.text((x + 1, y + 1), text, fill=(255, 255, 255), font=font)
+        draw.text((x, y), text, fill=_OVERLAY_COLOR, font=font)
+
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=92)
+    buf.seek(0)
+    return buf
 
 
 # -----------------------------
@@ -67,7 +114,7 @@ with center_panel:
     from pathlib import Path
     image_path = Path(__file__).parent / "assets" / "factory_board.jpeg"
     if image_path.exists():
-        st.image(str(image_path), use_container_width=True)
+        st.image(draw_board_overlay(state, str(image_path)), use_container_width=True)
 
     col_a, col_b, col_c, col_d = st.columns(4)
 
