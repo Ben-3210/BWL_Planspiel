@@ -119,3 +119,27 @@ MARKETING_PREIS_FAKTOR = 0.05
 GELD_RUNDUNG = 2
 DEFAULT_WAEHRUNG = "M"
 ENABLE_LOGGING = True
+
+# =========================================================
+# 8) Nachfragekurve
+# =========================================================
+
+# Isoelastische Nachfragefunktion: Nachfrage = BASIS * (BASIS_PREIS / Preis)^ELASTIZITAET
+# Bei Basispreis 11M → 3 Lose/Quartal ≈ 99M/Jahr (passt zu den Referenzwerten)
+BASISPREIS = 11.0
+BASISNACHFRAGE_PRO_QUARTAL = 3
+PREISELASTIZITAET = 1.2              # > 1 = elastisch (realistisch für Industrieprodukte)
+
+# =========================================================
+# 9) Abschreibungen (AfA)
+# =========================================================
+
+AFA_GEBAEUDE_PRO_JAHR = 1.0          # Nutzungsdauer 20 Jahre
+AFA_MASCHINEN_PRO_JAHR = 5.0         # Nutzungsdauer 6 Jahre
+AFA_NEUE_ANLAGE_PRO_JAHR = 4.0       # 20M Investition über 5 Jahre
+
+# =========================================================
+# 10) Jahresabschluss
+# =========================================================
+
+STEUERSATZ = 1 / 3                   # 1/3 des Gewinns vor Steuern

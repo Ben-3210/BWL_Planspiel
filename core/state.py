@@ -12,6 +12,19 @@ from data.config import (
     STANDARD_GEMEINKOSTEN_JAHR_1_PRO_QUARTAL,
     STANDARD_ZINSSATZ,
 )
+from data.defaults import (
+    START_AV_BGA,
+    START_AV_GEBAEUDE,
+    START_AV_GRUNDSTUECKE,
+    START_AV_MASCHINEN,
+    START_DARLEHEN,
+    START_EIGENKAPITAL,
+    START_FERTIGE_ERZEUGNISSE,
+    START_FORDERUNGEN,
+    START_LIQUIDE_MITTEL,
+    START_ROHMATERIAL_LAGER,
+    START_UNFERTIGE_ERZEUGNISSE,
+)
 
 
 @dataclass
@@ -26,29 +39,34 @@ class GameState:
     # -----------------------------
     # Liquidität / Finanzierung
     # -----------------------------
-    liquide_mittel: float = 0.0
-    darlehen: float = 0.0
+    liquide_mittel: float = START_LIQUIDE_MITTEL
+    darlehen: float = START_DARLEHEN
     zinssatz: float = STANDARD_ZINSSATZ
 
     # -----------------------------
     # Umlaufvermögen
     # -----------------------------
-    rohmaterial_lager: float = 0.0
-    unfertige_erzeugnisse: float = 0.0
-    fertige_erzeugnisse: float = 0.0
-    forderungen: float = 0.0
+    rohmaterial_lager: float = START_ROHMATERIAL_LAGER
+    unfertige_erzeugnisse: float = START_UNFERTIGE_ERZEUGNISSE
+    fertige_erzeugnisse: float = START_FERTIGE_ERZEUGNISSE
+    forderungen: float = START_FORDERUNGEN
 
     # -----------------------------
     # Anlagevermögen
     # -----------------------------
-    maschinenwert: float = 0.0
+    av_grundstuecke: float = START_AV_GRUNDSTUECKE
+    av_gebaeude: float = START_AV_GEBAEUDE
+    av_maschinen: float = START_AV_MASCHINEN
+    av_bga: float = START_AV_BGA
     abschreibungen_kumuliert: float = 0.0
 
     # -----------------------------
-    # Verbindlichkeiten
+    # Eigenkapital / Verbindlichkeiten
     # -----------------------------
+    eigenkapital: float = START_EIGENKAPITAL
     verbindlichkeiten_lieferanten: float = 0.0
     sonstige_verbindlichkeiten: float = 0.0
+    steuerverbindlichkeiten: float = 0.0
 
     # -----------------------------
     # Erfolgsgrößen / Periodenwerte
@@ -56,7 +74,7 @@ class GameState:
     umsatz: float = 0.0
     materialkosten: float = 0.0
     fertigungskosten: float = 0.0
-    gemeinkosten: float = STANDARD_GEMEINKOSTEN_JAHR_1_PRO_QUARTAL
+    gemeinkosten: float = 0.0
     marketingkosten: float = 0.0
     zinskosten: float = 0.0
     abschreibungen_periode: float = 0.0
@@ -64,9 +82,8 @@ class GameState:
 
     # -----------------------------
     # Variable Steuerungsgrößen
-    # Erweiterungen für euer Projekt
     # -----------------------------
-    verkaufspreis: float = 0.0
+    verkaufspreis: float = 11.0
     absatzmenge_plan: int = 0
     absatzmenge_ist: int = 0
     einkaufspreis_material: float = STANDARD_EINKAUFSPREIS_MATERIAL_PRO_LOS
@@ -81,6 +98,12 @@ class GameState:
     bestellmenge_material: int = 0
     nachfrage_index: float = 1.0
     marketing_index: float = 1.0
+    neue_anlage_aktiv: bool = False
+
+    # -----------------------------
+    # Kennzahlen-Verlauf (für Charts)
+    # -----------------------------
+    kennzahlen_history: List[Dict] = field(default_factory=list)
 
     # -----------------------------
     # Historie / Log
@@ -92,8 +115,6 @@ class GameState:
     # -----------------------------
     def __post_init__(self) -> None:
         """Setzt abgeleitete Startwerte nach der Initialisierung."""
-        if self.gemeinkosten == 0.0:
-            self.gemeinkosten = STANDARD_GEMEINKOSTEN_JAHR_1_PRO_QUARTAL
         if self.einkaufspreis_material == 0.0:
             self.einkaufspreis_material = STANDARD_EINKAUFSPREIS_MATERIAL_PRO_LOS
         if self.fertigungskosten_pro_los == 0.0:
@@ -117,14 +138,16 @@ class GameState:
             self.jahr += 1
 
         self.runde += 1
+        # Marketing-Effekt gilt nur für ein Quartal
+        self.marketing_index = 1.0
         self.log(f"Fortschritt: Jahr {self.jahr}, Quartal {self.quartal}, Runde {self.runde}")
 
     def reset_periodenwerte(self) -> None:
-        """Setzt Erfolgsgrößen der aktuellen Periode zurück."""
+        """Setzt Erfolgsgrößen für die neue Jahresperiode zurück."""
         self.umsatz = 0.0
         self.materialkosten = 0.0
         self.fertigungskosten = 0.0
-        self.gemeinkosten = STANDARD_GEMEINKOSTEN_JAHR_1_PRO_QUARTAL
+        self.gemeinkosten = 0.0
         self.marketingkosten = 0.0
         self.zinskosten = 0.0
         self.abschreibungen_periode = 0.0
@@ -134,7 +157,7 @@ class GameState:
         self.bestellmenge_material = 0
         self.log("Periodenwerte wurden zurückgesetzt.")
 
-    def to_dict(self) -> Dict[str, int | float]:
+    def to_dict(self) -> Dict[str, int | float | bool]:
         """Gibt den aktuellen Zustand als Dictionary zurück."""
         return {
             "jahr": self.jahr,
@@ -147,10 +170,15 @@ class GameState:
             "unfertige_erzeugnisse": self.unfertige_erzeugnisse,
             "fertige_erzeugnisse": self.fertige_erzeugnisse,
             "forderungen": self.forderungen,
-            "maschinenwert": self.maschinenwert,
+            "av_grundstuecke": self.av_grundstuecke,
+            "av_gebaeude": self.av_gebaeude,
+            "av_maschinen": self.av_maschinen,
+            "av_bga": self.av_bga,
             "abschreibungen_kumuliert": self.abschreibungen_kumuliert,
+            "eigenkapital": self.eigenkapital,
             "verbindlichkeiten_lieferanten": self.verbindlichkeiten_lieferanten,
             "sonstige_verbindlichkeiten": self.sonstige_verbindlichkeiten,
+            "steuerverbindlichkeiten": self.steuerverbindlichkeiten,
             "umsatz": self.umsatz,
             "materialkosten": self.materialkosten,
             "fertigungskosten": self.fertigungskosten,
@@ -170,4 +198,5 @@ class GameState:
             "bestellmenge_material": self.bestellmenge_material,
             "nachfrage_index": self.nachfrage_index,
             "marketing_index": self.marketing_index,
+            "neue_anlage_aktiv": self.neue_anlage_aktiv,
         }
