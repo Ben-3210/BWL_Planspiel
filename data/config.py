@@ -141,6 +141,7 @@ NACHFRAGE_STANDARDABWEICHUNG = 0.30
 AFA_GEBAEUDE_PRO_JAHR = 1.0          # Nutzungsdauer 20 Jahre
 AFA_MASCHINEN_PRO_JAHR = 5.0         # Nutzungsdauer 6 Jahre
 AFA_NEUE_ANLAGE_PRO_JAHR = 4.0       # 20M Investition über 5 Jahre
+AFA_BGA_PRO_JAHR = 0.4               # 2M Startwert über 5 Jahre
 
 # =========================================================
 # 10) Jahresabschluss

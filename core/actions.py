@@ -1,4 +1,5 @@
 from data.config import (
+    AFA_BGA_PRO_JAHR,
     AFA_GEBAEUDE_PRO_JAHR,
     AFA_MASCHINEN_PRO_JAHR,
     AFA_NEUE_ANLAGE_PRO_JAHR,
@@ -292,11 +293,13 @@ def jahresabschluss(state: GameState) -> None:
     # --- Abschreibungen ---
     afa_gebaeude = min(AFA_GEBAEUDE_PRO_JAHR, state.av_gebaeude)
     afa_maschinen = min(AFA_MASCHINEN_PRO_JAHR, state.av_maschinen)
+    afa_bga = min(AFA_BGA_PRO_JAHR, state.av_bga)
     afa_neue_anlage = AFA_NEUE_ANLAGE_PRO_JAHR if state.neue_anlage_aktiv else 0.0
 
     state.av_gebaeude -= afa_gebaeude
     state.av_maschinen -= afa_maschinen
-    afa_gesamt = afa_gebaeude + afa_maschinen + afa_neue_anlage
+    state.av_bga -= afa_bga
+    afa_gesamt = afa_gebaeude + afa_maschinen + afa_bga + afa_neue_anlage
     state.abschreibungen_periode += afa_gesamt
     state.abschreibungen_kumuliert += afa_gesamt
     state.log(f"Jahresabschluss – Abschreibungen: {afa_gesamt:.2f} M.")
