@@ -411,7 +411,7 @@ if schritt >= 6:
         st.warning("**Q4:** Führe zuerst den Jahresabschluss durch, bevor du ins neue Jahr wechselst.")
 
         zinsen_vorschau = berechne_zinskosten(state.darlehen, state.zinssatz)
-        afa_vorschau = min(1.0, state.av_gebaeude) + min(5.0, state.av_maschinen)
+        afa_vorschau = min(1.0, state.av_gebaeude) + min(5.0, state.av_maschinen) + min(0.4, state.av_bga)
         if state.neue_anlage_aktiv:
             afa_vorschau += 4.0
 
