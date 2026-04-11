@@ -130,6 +130,10 @@ BASISPREIS = 11.0
 BASISNACHFRAGE_PRO_QUARTAL = 3
 PREISELASTIZITAET = 1.2              # > 1 = elastisch (realistisch für Industrieprodukte)
 
+# Marktschwankung: Standardabweichung als Anteil der erwarteten Nachfrage
+# 0.30 → ±30% Schwankung (68%-Konfidenzintervall)
+NACHFRAGE_STANDARDABWEICHUNG = 0.30
+
 # =========================================================
 # 9) Abschreibungen (AfA)
 # =========================================================

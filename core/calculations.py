@@ -1,6 +1,9 @@
+import random
+
 from data.config import (
     BASISNACHFRAGE_PRO_QUARTAL,
     BASISPREIS,
+    NACHFRAGE_STANDARDABWEICHUNG,
     PREISELASTIZITAET,
 )
 
@@ -70,7 +73,7 @@ def berechne_cashflow(gewinn: float, abschreibungen: float) -> float:
 
 
 def berechne_nachfrage(preis: float, marketing_index: float = 1.0) -> int:
-    """Berechnet die quartalsweise Nachfrage nach einem isoelastischen Modell.
+    """Berechnet die *erwartete* Quartalsnachfrage (Planungswert, ohne Zufallselement).
 
     Formel: Nachfrage = BASIS * (BASISPREIS / Preis)^ELASTIZITAET * Marketing-Index
     Bei Basispreis 11M → 3 Lose/Quartal (entspricht ~99M Jahresumsatz).
@@ -79,6 +82,30 @@ def berechne_nachfrage(preis: float, marketing_index: float = 1.0) -> int:
         return BASISNACHFRAGE_PRO_QUARTAL
     raw = BASISNACHFRAGE_PRO_QUARTAL * (BASISPREIS / preis) ** PREISELASTIZITAET * marketing_index
     return max(0, int(raw))
+
+
+def berechne_nachfrage_spanne(preis: float, marketing_index: float = 1.0) -> tuple[int, int]:
+    """Gibt die realistische Nachfragespanne zurück (µ ± 2σ, 95%-Konfidenzintervall).
+
+    Dient der Anzeige im UI damit Spieler die Unsicherheit einschätzen können.
+    """
+    mu = berechne_nachfrage(preis, marketing_index)
+    sigma = max(0.5, mu * NACHFRAGE_STANDARDABWEICHUNG)
+    low = max(0, int(mu - 2 * sigma))
+    high = int(mu + 2 * sigma) + 1
+    return low, high
+
+
+def berechne_tatsaechliche_nachfrage(preis: float, marketing_index: float = 1.0) -> int:
+    """Würfelt die tatsächliche Quartalsnachfrage aus einer Normalverteilung.
+
+    Der Erwartungswert folgt der isoelastischen Kurve; die Streuung (σ = 30% des µ)
+    bildet reale Marktschwankungen ab. Wird einmalig pro Verkaufsvorgang gezogen.
+    """
+    mu = berechne_nachfrage(preis, marketing_index)
+    sigma = max(0.5, mu * NACHFRAGE_STANDARDABWEICHUNG)
+    tatsaechlich = int(round(random.gauss(mu, sigma)))
+    return max(0, tatsaechlich)
 
 
 def berechne_kennzahlen(state) -> dict:

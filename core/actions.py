@@ -14,7 +14,7 @@ from core.calculations import (
     berechne_gewinn,
     berechne_kennzahlen,
     berechne_materialkosten,
-    berechne_nachfrage,
+    berechne_tatsaechliche_nachfrage,
     berechne_umsatz,
     berechne_zinskosten,
 )
@@ -149,33 +149,53 @@ def produktion_neue_anlage(state: GameState, menge: float) -> None:
 # Verkauf
 # =========================================================
 
-def produkte_verkaufen(state: GameState, menge: float, sofortzahlung: bool = False) -> None:
-    """Verkauft fertige Erzeugnisse; Menge ist durch Marktbedarf begrenzt."""
-    if not ist_positive_menge(menge):
-        raise ValueError("Die Absatzmenge muss größer als 0 sein.")
-    if not absatzmenge_im_bereich(menge):
-        raise ValueError("Die Absatzmenge liegt außerhalb des erlaubten Bereichs.")
-    if not hat_genug_fertige_erzeugnisse(state.fertige_erzeugnisse, menge):
+def produkte_verkaufen(state: GameState, menge_angebot: float, sofortzahlung: bool = False) -> None:
+    """Bietet fertige Erzeugnisse zum Verkauf an; tatsächlicher Absatz hängt von der
+    gewürfelten Marktnachfrage ab (Normalverteilung um den Erwartungswert).
+
+    Verkauft wird min(Angebot, tatsächliche Nachfrage). Nicht abgenommene Lose
+    verbleiben im Fertigwarenlager.
+    """
+    if not ist_positive_menge(menge_angebot):
+        raise ValueError("Das Verkaufsangebot muss größer als 0 sein.")
+    if not absatzmenge_im_bereich(menge_angebot):
+        raise ValueError("Das Verkaufsangebot liegt außerhalb des erlaubten Bereichs.")
+    if not hat_genug_fertige_erzeugnisse(state.fertige_erzeugnisse, menge_angebot):
         raise ValueError("Nicht genügend fertige Erzeugnisse für den Verkauf vorhanden.")
 
-    nachfrage = berechne_nachfrage(state.verkaufspreis, state.marketing_index)
-    if menge > nachfrage:
-        raise ValueError(
-            f"Absatzmenge ({menge:.0f}) übersteigt die Marktnachfrage ({nachfrage} Lose). "
-            f"Preis senken oder mehr Marketing einsetzen."
-        )
+    # Marktnachfrage für dieses Quartal würfeln (einmalig pro Verkauf)
+    nachfrage_index = state.marketing_index * state.nachfrage_index
+    tatsaechliche_nachfrage = berechne_tatsaechliche_nachfrage(state.verkaufspreis, nachfrage_index)
+    tatsaechlich_verkauft = min(int(menge_angebot), tatsaechliche_nachfrage)
 
-    umsatz = berechne_umsatz(menge, state.verkaufspreis)
-    state.fertige_erzeugnisse -= menge
+    # Ergebnis im State speichern (für UI-Feedback)
+    state.letzte_tatsaechliche_nachfrage = tatsaechliche_nachfrage
+    state.letzte_verkaufte_menge = tatsaechlich_verkauft
+
+    if tatsaechlich_verkauft <= 0:
+        state.log(
+            f"Verkauf: Markt hat keine Erzeugnisse abgenommen "
+            f"(Nachfrage: {tatsaechliche_nachfrage}, Angebot: {int(menge_angebot)})."
+        )
+        return
+
+    umsatz = berechne_umsatz(tatsaechlich_verkauft, state.verkaufspreis)
+    state.fertige_erzeugnisse -= tatsaechlich_verkauft
     state.umsatz += umsatz
-    state.absatzmenge_ist += int(menge)
+    state.absatzmenge_ist += tatsaechlich_verkauft
 
     if sofortzahlung:
         state.liquide_mittel += umsatz
-        state.log(f"Verkauf (Sofortzahlung): {menge:.0f} Lose, Umsatz {umsatz:.2f} M.")
+        state.log(
+            f"Verkauf (Sofortzahlung): {tatsaechlich_verkauft} von {int(menge_angebot)} Losen abgenommen "
+            f"(Nachfrage: {tatsaechliche_nachfrage}), Umsatz {umsatz:.2f} M."
+        )
     else:
         state.forderungen += umsatz
-        state.log(f"Verkauf (auf Ziel): {menge:.0f} Lose, Umsatz {umsatz:.2f} M als Forderung gebucht.")
+        state.log(
+            f"Verkauf (auf Ziel): {tatsaechlich_verkauft} von {int(menge_angebot)} Losen abgenommen "
+            f"(Nachfrage: {tatsaechliche_nachfrage}), {umsatz:.2f} M als Forderung gebucht."
+        )
 
 
 # =========================================================
@@ -308,6 +328,7 @@ def jahresabschluss(state: GameState) -> None:
 
     # --- Periodenwerte für nächstes Jahr zurücksetzen ---
     state.reset_periodenwerte()
+    state.jahresabschluss_durchgefuehrt = True
     state.log(f"Jahresabschluss Jahr {state.jahr} abgeschlossen.")
 
 

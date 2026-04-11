@@ -101,6 +101,24 @@ class GameState:
     neue_anlage_aktiv: bool = False
 
     # -----------------------------
+    # Quartalsschritte (geführter Modus)
+    # -----------------------------
+    quartalsschritt: int = 1                              # 1–6: aktueller Schritt im Quartal
+    jahresabschluss_durchgefuehrt: bool = False
+
+    # -----------------------------
+    # Letztes Verkaufsergebnis (für UI-Feedback)
+    # -----------------------------
+    letzte_tatsaechliche_nachfrage: int = 0
+    letzte_verkaufte_menge: int = 0
+
+    # -----------------------------
+    # Quartalsereignisse
+    # -----------------------------
+    aktuelles_ereignis: dict | None = None
+    ereignis_original_werte: dict = field(default_factory=dict)
+
+    # -----------------------------
     # Kennzahlen-Verlauf (für Charts)
     # -----------------------------
     kennzahlen_history: List[Dict] = field(default_factory=list)
@@ -130,7 +148,13 @@ class GameState:
             self.verlauf.append(text)
 
     def naechstes_quartal(self) -> None:
-        """Springt ins nächste Quartal; nach dem letzten Quartal beginnt ein neues Jahr."""
+        """Springt ins nächste Quartal, würfelt ein neues Ereignis und setzt Schritte zurück."""
+        from core.events import setze_ereignis_zurueck, wuerfle_ereignis, wende_ereignis_an
+
+        # Laufendes Ereignis zurücksetzen (Originalwerte wiederherstellen)
+        setze_ereignis_zurueck(self)
+
+        # Zeit weiterzählen
         if self.quartal < QUARTALE_PRO_JAHR:
             self.quartal += 1
         else:
@@ -138,8 +162,18 @@ class GameState:
             self.jahr += 1
 
         self.runde += 1
-        # Marketing-Effekt gilt nur für ein Quartal
+
+        # Marketing- und Schrittstate zurücksetzen
         self.marketing_index = 1.0
+        self.quartalsschritt = 1
+        self.jahresabschluss_durchgefuehrt = False
+
+        # Neues Quartalsereignis würfeln und anwenden
+        neues_ereignis = wuerfle_ereignis()
+        if neues_ereignis:
+            self.aktuelles_ereignis = neues_ereignis
+            wende_ereignis_an(self, neues_ereignis)
+
         self.log(f"Fortschritt: Jahr {self.jahr}, Quartal {self.quartal}, Runde {self.runde}")
 
     def reset_periodenwerte(self) -> None:
