@@ -19,6 +19,7 @@ Hier stehen NICHT:
 # =========================================================
 
 QUARTALE_PRO_JAHR = 4
+SPIELDAUER_JAHRE = 5
 START_JAHR = 1
 START_QUARTAL = 1
 

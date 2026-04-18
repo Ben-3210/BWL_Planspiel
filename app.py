@@ -22,6 +22,7 @@ from core.calculations import (
     berechne_zinskosten,
 )
 from core.state import GameState
+from data.config import SPIELDAUER_JAHRE
 
 st.set_page_config(page_title="Factory Planspiel", layout="wide")
 
@@ -239,6 +240,58 @@ def zeige_intro() -> None:
 
 if not st.session_state.get("intro_gesehen", False):
     zeige_intro()
+    st.stop()
+
+
+# ─── ERGEBNIS-SCREEN ───────────────────────────────────────────────────────────
+
+if st.session_state.get("zeige_ergebnis", False):
+    from data.defaults import START_EIGENKAPITAL
+
+    st.title("🏁 Spielende – Auswertung Factory AG")
+    st.markdown(f"#### {SPIELDAUER_JAHRE} Jahre · {SPIELDAUER_JAHRE * 4} Quartale")
+    st.divider()
+
+    ek_start = START_EIGENKAPITAL
+    ek_end = state.eigenkapital
+    ek_wachstum = ek_end - ek_start
+    ek_wachstum_pct = (ek_wachstum / ek_start * 100) if ek_start > 0 else 0
+
+    r1, r2, r3 = st.columns(3)
+    r1.metric("Eigenkapital Start", f"{ek_start:.1f} M")
+    r2.metric("Eigenkapital Ende", f"{ek_end:.1f} M", delta=f"{ek_wachstum:+.1f} M")
+    r3.metric("EK-Wachstum", f"{ek_wachstum_pct:+.1f} %")
+
+    st.divider()
+
+    if state.kennzahlen_history:
+        df = pd.DataFrame(state.kennzahlen_history)
+
+        st.markdown("### Jahresverlauf")
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown("**Umsatz, EBIT & Gewinn (M)**")
+            st.line_chart(df.set_index("Jahr")[["Umsatz", "EBIT", "Gewinn n. St."]])
+        with c2:
+            st.markdown("**Eigenkapitalentwicklung (M)**")
+            st.line_chart(df.set_index("Jahr")[["Eigenkapital", "Fremdkapital (Darlehen)"]])
+
+        st.markdown("### Kennzahlenübersicht")
+        anzeige_cols = [
+            "Jahr", "Umsatz", "EBIT", "Gewinn n. St.",
+            "Umsatzrendite ROS (%)", "Eigenkapitalrendite ROE (%)",
+            "ROI (%)", "Eigenkapital", "Fremdkapital (Darlehen)",
+        ]
+        vorhandene_cols = [c for c in anzeige_cols if c in df.columns]
+        st.dataframe(df[vorhandene_cols].set_index("Jahr"), use_container_width=True)
+
+    st.divider()
+    if st.button("↺ Neues Spiel starten", type="primary"):
+        reset_game()
+        st.session_state.zeige_ergebnis = False
+        st.session_state.intro_gesehen = False
+        st.rerun()
+
     st.stop()
 
 
@@ -854,9 +907,15 @@ if schritt >= 6:
         else:
             st.success(f"Jahresabschluss Jahr {state.jahr} abgeschlossen.")
 
-    kann_weiter = state.quartal != 4 or state.jahresabschluss_durchgefuehrt
+    spiel_vorbei = state.jahr == SPIELDAUER_JAHRE and state.quartal == 4 and state.jahresabschluss_durchgefuehrt
+    kann_weiter = (state.quartal != 4 or state.jahresabschluss_durchgefuehrt) and not spiel_vorbei
 
-    if st.button("▶ Nächstes Quartal", type="primary", disabled=not kann_weiter):
+    if spiel_vorbei:
+        st.success(f"🏁 Jahr {SPIELDAUER_JAHRE} abgeschlossen – das Spiel ist beendet!")
+        if st.button("📊 Ergebnisse anzeigen", type="primary"):
+            st.session_state.zeige_ergebnis = True
+            st.rerun()
+    elif st.button("▶ Nächstes Quartal", type="primary", disabled=not kann_weiter):
         run_action(state.naechstes_quartal)
 
 st.divider()
