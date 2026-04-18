@@ -884,28 +884,28 @@ if schritt >= 6:
     st.markdown("## ✅ Quartal abschließen")
 
     if state.quartal == 4:
-        st.warning("**Q4:** Führe zuerst den Jahresabschluss durch, bevor du ins neue Jahr wechselst.")
-
-        zinsen_vorschau = berechne_zinskosten(state.darlehen, state.zinssatz)
-        afa_vorschau = min(1.0, state.av_gebaeude) + min(5.0, state.av_maschinen) + min(0.4, state.av_bga)
-        if state.neue_anlage_aktiv:
-            afa_vorschau += 4.0
-
-        ja_col1, ja_col2 = st.columns(2)
-        ja_col1.metric("Zinsen (fällig)", f"{zinsen_vorschau:.2f} M")
-        ja_col1.metric("Abschreibungen", f"{afa_vorschau:.2f} M")
-
-        gwv = berechne_gewinn(
-            state.umsatz, state.materialkosten, state.fertigungskosten,
-            state.gemeinkosten, state.marketingkosten,
-            state.zinskosten + zinsen_vorschau,
-            state.abschreibungen_periode + afa_vorschau,
-        )
-        steuern_vorschau = max(0.0, gwv / 3)
-        ja_col2.metric("Gewinn vor Steuern (Vorschau)", f"{gwv:.2f} M")
-        ja_col2.metric("Steuern (Vorschau, 1/3)", f"{steuern_vorschau:.2f} M")
-
         if not state.jahresabschluss_durchgefuehrt:
+            st.warning("**Q4:** Führe zuerst den Jahresabschluss durch, bevor du ins neue Jahr wechselst.")
+
+            zinsen_vorschau = berechne_zinskosten(state.darlehen, state.zinssatz)
+            afa_vorschau = min(1.0, state.av_gebaeude) + min(5.0, state.av_maschinen) + min(0.4, state.av_bga)
+            if state.neue_anlage_aktiv:
+                afa_vorschau += 4.0
+
+            ja_col1, ja_col2 = st.columns(2)
+            ja_col1.metric("Zinsen (fällig)", f"{zinsen_vorschau:.2f} M")
+            ja_col1.metric("Abschreibungen", f"{afa_vorschau:.2f} M")
+
+            gwv = berechne_gewinn(
+                state.umsatz, state.materialkosten, state.fertigungskosten,
+                state.gemeinkosten, state.marketingkosten,
+                state.zinskosten + zinsen_vorschau,
+                state.abschreibungen_periode + afa_vorschau,
+            )
+            steuern_vorschau = max(0.0, gwv / 3)
+            ja_col2.metric("Gewinn vor Steuern (Vorschau)", f"{gwv:.2f} M")
+            ja_col2.metric("Steuern (Vorschau, 1/3)", f"{steuern_vorschau:.2f} M")
+
             if st.button("📋 Jahresabschluss durchführen", type="primary"):
                 run_action(
                     jahresabschluss, state,
