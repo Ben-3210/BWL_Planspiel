@@ -307,6 +307,7 @@ def jahresabschluss(state: GameState) -> None:
 
     state.av_gebaeude -= afa_gebaeude
     state.av_maschinen -= afa_maschinen
+    state.av_maschinen -= afa_neue_anlage   # Buchwert der neuen Anlage abschreiben
     state.av_bga -= afa_bga
     afa_gesamt = afa_gebaeude + afa_maschinen + afa_bga + afa_neue_anlage
     state.abschreibungen_periode += afa_gesamt
