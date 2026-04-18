@@ -3,6 +3,9 @@ import random
 from data.config import (
     BASISNACHFRAGE_PRO_QUARTAL,
     BASISPREIS,
+    EINKAUFSPREIS_ERWARTUNGSWERT,
+    EINKAUFSPREIS_MIN,
+    EINKAUFSPREIS_STANDARDABWEICHUNG,
     NACHFRAGE_STANDARDABWEICHUNG,
     PREISELASTIZITAET,
 )
@@ -70,6 +73,12 @@ def berechne_gewinn(
 def berechne_cashflow(gewinn: float, abschreibungen: float) -> float:
     """Berechnet einen einfachen Cashflow aus Gewinn und Abschreibungen."""
     return gewinn + abschreibungen
+
+
+def wuerfle_einkaufspreis() -> float:
+    """Zieht einen neuen Einkaufspreis aus einer Normalverteilung (µ=3M, σ=0.4M)."""
+    preis = random.gauss(EINKAUFSPREIS_ERWARTUNGSWERT, EINKAUFSPREIS_STANDARDABWEICHUNG)
+    return round(max(EINKAUFSPREIS_MIN, preis), 2)
 
 
 def berechne_nachfrage(preis: float, marketing_index: float = 1.0) -> int:

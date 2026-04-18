@@ -113,6 +113,8 @@ class GameState:
     letzte_verkaufte_menge: int = 0
     verkauf_durchgefuehrt: bool = False
     marketing_durchgefuehrt: bool = False
+    stufe1_durchgefuehrt: bool = False
+    stufe2_durchgefuehrt: bool = False
     neue_unfertige_dieses_quartal: float = 0.0
 
     # -----------------------------
@@ -153,6 +155,7 @@ class GameState:
     def naechstes_quartal(self) -> None:
         """Springt ins nächste Quartal, würfelt ein neues Ereignis und setzt Schritte zurück."""
         from core.events import setze_ereignis_zurueck, wuerfle_ereignis, wende_ereignis_an
+        from core.calculations import wuerfle_einkaufspreis
 
         # Laufendes Ereignis zurücksetzen (Originalwerte wiederherstellen)
         setze_ereignis_zurueck(self)
@@ -172,7 +175,12 @@ class GameState:
         self.jahresabschluss_durchgefuehrt = False
         self.verkauf_durchgefuehrt = False
         self.marketing_durchgefuehrt = False
+        self.stufe1_durchgefuehrt = False
+        self.stufe2_durchgefuehrt = False
         self.neue_unfertige_dieses_quartal = 0.0
+
+        # Neuen Einkaufspreis würfeln (vor Ereignis, damit Events ihn noch modifizieren können)
+        self.einkaufspreis_material = wuerfle_einkaufspreis()
 
         # Neues Quartalsereignis würfeln und anwenden
         neues_ereignis = wuerfle_ereignis()

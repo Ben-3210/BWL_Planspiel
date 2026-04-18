@@ -84,6 +84,7 @@ def produktion_stufe_1(state: GameState, menge: float) -> None:
     state.fertigungskosten += kosten
     state.produktionsmenge = menge
     state.neue_unfertige_dieses_quartal += menge
+    state.stufe1_durchgefuehrt = True
     state.log(f"Fertigungsstufe 1: {menge:.0f} Lose, Kosten {kosten:.2f} M.")
 
 
@@ -114,6 +115,7 @@ def endmontage_stufe_2(state: GameState, menge: float) -> None:
     state.liquide_mittel -= kosten
     state.fertigungskosten += kosten
     state.produktionsmenge = menge
+    state.stufe2_durchgefuehrt = True
     state.log(f"Endmontage Stufe 2: {menge:.0f} Lose, Kosten {kosten:.2f} M.")
 
 

@@ -94,12 +94,12 @@ def _farbe_metrik(wert: float, schwelle_gut: float, schwelle_ok: float, hoeher_i
             return "#dc3545"
 
 
-def _kpi_box(label: str, wert: str, farbe: str = "#f0f2f6") -> None:
+def _kpi_box(label: str, wert: str, farbe: str = "#1e2a3a") -> None:
     """Rendert eine kompakte KPI-Box mit Hintergrundfarbe."""
     st.markdown(
         f"""<div style="background:{farbe};border-radius:6px;padding:6px 10px;margin-bottom:6px;">
-        <div style="font-size:0.72rem;color:#555;line-height:1.2">{label}</div>
-        <div style="font-size:1.05rem;font-weight:700;line-height:1.4">{wert}</div>
+        <div style="font-size:0.72rem;color:#aaa;line-height:1.2">{label}</div>
+        <div style="font-size:1.05rem;font-weight:700;color:#f0f0f0;line-height:1.4">{wert}</div>
         </div>""",
         unsafe_allow_html=True,
     )
@@ -126,22 +126,22 @@ with st.sidebar:
 
     lm_farbe = _farbe_metrik(state.liquide_mittel, 15, 5)
     f1.markdown(
-        f"<div style='font-size:0.72rem;color:#555'>Liquide Mittel</div>"
+        f"<div style='font-size:0.72rem;color:#aaa'>Liquide Mittel</div>"
         f"<div style='font-size:1.0rem;font-weight:700;color:{lm_farbe}'>{state.liquide_mittel:.1f} M</div>",
         unsafe_allow_html=True,
     )
     f2.markdown(
-        f"<div style='font-size:0.72rem;color:#555'>Eigenkapital</div>"
+        f"<div style='font-size:0.72rem;color:#aaa'>Eigenkapital</div>"
         f"<div style='font-size:1.0rem;font-weight:700'>{state.eigenkapital:.1f} M</div>",
         unsafe_allow_html=True,
     )
     f1.markdown(
-        f"<div style='font-size:0.72rem;color:#555'>Forderungen</div>"
+        f"<div style='font-size:0.72rem;color:#aaa'>Forderungen</div>"
         f"<div style='font-size:1.0rem;font-weight:700'>{state.forderungen:.1f} M</div>",
         unsafe_allow_html=True,
     )
     f2.markdown(
-        f"<div style='font-size:0.72rem;color:#555'>Darlehen</div>"
+        f"<div style='font-size:0.72rem;color:#aaa'>Darlehen</div>"
         f"<div style='font-size:1.0rem;font-weight:700;color:#dc3545'>{state.darlehen:.1f} M</div>",
         unsafe_allow_html=True,
     )
@@ -152,19 +152,19 @@ with st.sidebar:
     st.markdown("**📦 Lagerbestand (Lose)**")
     st.markdown(
         f"""<div style="display:flex;align-items:center;gap:4px;font-size:0.85rem;">
-          <div style="background:#e9f5ff;border-radius:6px;padding:6px 8px;text-align:center;flex:1">
-            <div style="font-size:0.65rem;color:#555">Rohmat.</div>
-            <div style="font-weight:700">{state.rohmaterial_lager:.0f}</div>
+          <div style="background:#1a3a5c;border-radius:6px;padding:6px 8px;text-align:center;flex:1">
+            <div style="font-size:0.65rem;color:#90b8d8">Rohmat.</div>
+            <div style="font-weight:700;color:#e0f0ff">{state.rohmaterial_lager:.0f}</div>
           </div>
-          <div style="color:#888">→</div>
-          <div style="background:#fff3cd;border-radius:6px;padding:6px 8px;text-align:center;flex:1">
-            <div style="font-size:0.65rem;color:#555">Unfertig</div>
-            <div style="font-weight:700">{state.unfertige_erzeugnisse:.0f}</div>
+          <div style="color:#aaa">→</div>
+          <div style="background:#4a3200;border-radius:6px;padding:6px 8px;text-align:center;flex:1">
+            <div style="font-size:0.65rem;color:#d4a843">Unfertig</div>
+            <div style="font-weight:700;color:#ffe0a0">{state.unfertige_erzeugnisse:.0f}</div>
           </div>
-          <div style="color:#888">→</div>
-          <div style="background:#d4edda;border-radius:6px;padding:6px 8px;text-align:center;flex:1">
-            <div style="font-size:0.65rem;color:#555">Fertig</div>
-            <div style="font-weight:700">{state.fertige_erzeugnisse:.0f}</div>
+          <div style="color:#aaa">→</div>
+          <div style="background:#0d3320;border-radius:6px;padding:6px 8px;text-align:center;flex:1">
+            <div style="font-size:0.65rem;color:#5cb87a">Fertig</div>
+            <div style="font-weight:700;color:#a8f0be">{state.fertige_erzeugnisse:.0f}</div>
           </div>
         </div>""",
         unsafe_allow_html=True,
@@ -180,12 +180,12 @@ with st.sidebar:
     ebit_farbe = "#28a745" if kz["EBIT"] >= 0 else "#dc3545"
     gwn_farbe = "#28a745" if kz["Gewinn n. St."] >= 0 else "#dc3545"
     e1.markdown(
-        f"<div style='font-size:0.72rem;color:#555'>EBIT</div>"
+        f"<div style='font-size:0.72rem;color:#aaa'>EBIT</div>"
         f"<div style='font-size:1.0rem;font-weight:700;color:{ebit_farbe}'>{kz['EBIT']:.1f} M</div>",
         unsafe_allow_html=True,
     )
     e2.markdown(
-        f"<div style='font-size:0.72rem;color:#555'>Gewinn n. St.</div>"
+        f"<div style='font-size:0.72rem;color:#aaa'>Gewinn n. St.</div>"
         f"<div style='font-size:1.0rem;font-weight:700;color:{gwn_farbe}'>{kz['Gewinn n. St.']:.1f} M</div>",
         unsafe_allow_html=True,
     )
@@ -212,22 +212,22 @@ with st.sidebar:
     gkr_farbe = _farbe_metrik(kz["Gesamtkapitalrendite (%)"], 6, 2)
 
     r1.markdown(
-        f"<div style='font-size:0.72rem;color:#555'>ROS (Umsatzrendite)</div>"
+        f"<div style='font-size:0.72rem;color:#aaa'>ROS (Umsatzrendite)</div>"
         f"<div style='font-size:1.0rem;font-weight:700;color:{ros_farbe}'>{kz['Umsatzrendite ROS (%)']:.1f} %</div>",
         unsafe_allow_html=True,
     )
     r2.markdown(
-        f"<div style='font-size:0.72rem;color:#555'>ROE (EK-Rendite)</div>"
+        f"<div style='font-size:0.72rem;color:#aaa'>ROE (EK-Rendite)</div>"
         f"<div style='font-size:1.0rem;font-weight:700;color:{roe_farbe}'>{kz['Eigenkapitalrendite ROE (%)']:.1f} %</div>",
         unsafe_allow_html=True,
     )
     r1.markdown(
-        f"<div style='font-size:0.72rem;color:#555'>ROI</div>"
+        f"<div style='font-size:0.72rem;color:#aaa'>ROI</div>"
         f"<div style='font-size:1.0rem;font-weight:700;color:{roi_farbe}'>{kz['ROI (%)']:.1f} %</div>",
         unsafe_allow_html=True,
     )
     r2.markdown(
-        f"<div style='font-size:0.72rem;color:#555'>GKR</div>"
+        f"<div style='font-size:0.72rem;color:#aaa'>GKR</div>"
         f"<div style='font-size:1.0rem;font-weight:700;color:{gkr_farbe}'>{kz['Gesamtkapitalrendite (%)']:.1f} %</div>",
         unsafe_allow_html=True,
     )
@@ -241,12 +241,12 @@ with st.sidebar:
 
     w1, w2 = st.columns(2)
     w1.markdown(
-        f"<div style='font-size:0.72rem;color:#555'>Working Capital</div>"
+        f"<div style='font-size:0.72rem;color:#aaa'>Working Capital</div>"
         f"<div style='font-size:1.0rem;font-weight:700;color:{wc_farbe}'>{kz['Working Capital']:.1f} M</div>",
         unsafe_allow_html=True,
     )
     w2.markdown(
-        f"<div style='font-size:0.72rem;color:#555'>Cash Flow</div>"
+        f"<div style='font-size:0.72rem;color:#aaa'>Cash Flow</div>"
         f"<div style='font-size:1.0rem;font-weight:700;color:{cf_farbe}'>{kz['Cash Flow']:.1f} M</div>",
         unsafe_allow_html=True,
     )
@@ -260,10 +260,10 @@ with st.sidebar:
 
     def _liq_html(label: str, wert, gut: float, ok: float) -> str:
         if wert == "–":
-            return f"<div style='font-size:0.65rem;color:#555'>{label}</div><div style='font-weight:700'>–</div>"
+            return f"<div style='font-size:0.65rem;color:#aaa'>{label}</div><div style='font-weight:700'>–</div>"
         farbe = _farbe_metrik(float(wert), gut, ok)
         return (
-            f"<div style='font-size:0.65rem;color:#555'>{label}</div>"
+            f"<div style='font-size:0.65rem;color:#aaa'>{label}</div>"
             f"<div style='font-weight:700;color:{farbe}'>{wert}%</div>"
         )
 
@@ -283,13 +283,13 @@ with st.sidebar:
 
     b1, b2 = st.columns(2)
     b1.markdown(
-        f"<div style='font-size:0.72rem;color:#555;font-weight:600'>Aktiva {gk:.0f} M</div>"
+        f"<div style='font-size:0.72rem;color:#aaa;font-weight:600'>Aktiva {gk:.0f} M</div>"
         f"<div style='font-size:0.72rem'>AV: {av:.1f} M</div>"
         f"<div style='font-size:0.72rem'>UV: {uv:.1f} M</div>",
         unsafe_allow_html=True,
     )
     b2.markdown(
-        f"<div style='font-size:0.72rem;color:#555;font-weight:600'>Passiva {gk:.0f} M</div>"
+        f"<div style='font-size:0.72rem;color:#aaa;font-weight:600'>Passiva {gk:.0f} M</div>"
         f"<div style='font-size:0.72rem'>EK: {ek:.1f} M</div>"
         f"<div style='font-size:0.72rem'>FK: {fk:.1f} M</div>",
         unsafe_allow_html=True,
@@ -495,53 +495,47 @@ if schritt == 3:
                 success_message=f"{menge_neu:.0f} Lose produziert.",
             )
     else:
+        verfuegbar_s2 = max(0.0, state.unfertige_erzeugnisse - state.neue_unfertige_dieses_quartal)
         p_col1, p_col2 = st.columns(2)
 
         with p_col1:
             st.write("**Fertigungsstufe 1**")
-            if state.rohmaterial_lager <= 0:
+            if state.stufe1_durchgefuehrt:
+                st.success("Fertigung erfolgt.")
+                menge_s1 = 0.0
+            elif state.rohmaterial_lager <= 0:
                 st.info("Kein Rohmaterial vorhanden.")
+                menge_s1 = 0.0
             else:
-                if st.session_state.pop("s3_s1_reset", False):
+                if st.session_state.pop("s3_reset", False):
                     st.session_state["s3_s1"] = 0.0
-                menge_s1 = st.number_input("Menge Stufe 1", min_value=0.0, max_value=float(state.rohmaterial_lager), step=1.0, key="s3_s1")
-                rohmat_danach = state.rohmaterial_lager - menge_s1
-                st.caption(
-                    f"Rohmaterial: **{rohmat_danach:.0f} Lose** | "
-                    f"Kosten: {state.fertigungskosten_pro_los:.2f} M/Los"
-                )
-                if st.button("Stufe 1 starten", disabled=menge_s1 <= 0):
-                    try:
-                        produktion_stufe_1(state, menge_s1)
-                        st.session_state["s3_s1_reset"] = True
-                        st.rerun()
-                    except ValueError as e:
-                        st.error(str(e))
+                menge_s1 = st.number_input("Menge (Lose)", min_value=0.0, max_value=float(state.rohmaterial_lager), step=1.0, key="s3_s1")
+                st.caption(f"Rohmaterial danach: **{state.rohmaterial_lager - menge_s1:.0f} Lose** | {state.fertigungskosten_pro_los:.2f} M/Los")
 
         with p_col2:
             st.write("**Endmontage (Stufe 2)**")
-            verfuegbar_s2 = max(0.0, state.unfertige_erzeugnisse - state.neue_unfertige_dieses_quartal)
-            if verfuegbar_s2 <= 0:
-                if state.neue_unfertige_dieses_quartal > 0:
-                    st.info(f"{state.neue_unfertige_dieses_quartal:.0f} {'Los wurde' if state.neue_unfertige_dieses_quartal == 1 else 'Lose wurden'} dieses Quartal in Stufe 1 gefertigt – erst nächstes Quartal fertigstellbar.")
-                else:
-                    st.info("Keine unfertigen Erzeugnisse vorhanden.")
+            if state.stufe2_durchgefuehrt:
+                st.success("Fertigung erfolgt.")
+                menge_s2 = 0.0
+            elif verfuegbar_s2 <= 0:
+                st.info("Keine unfertigen Erzeugnisse verfügbar.")
+                menge_s2 = 0.0
             else:
-                if st.session_state.pop("s3_s2_reset", False):
+                if st.session_state.pop("s3_reset", False):
                     st.session_state["s3_s2"] = 0.0
-                menge_s2 = st.number_input("Menge Stufe 2", min_value=0.0, max_value=verfuegbar_s2, step=1.0, key="s3_s2")
-                unfertig_danach = state.unfertige_erzeugnisse - menge_s2
-                st.caption(
-                    f"Unfertige Erzeugnisse: **{unfertig_danach:.0f} Lose** | "
-                    f"Kosten: {state.endmontagekosten_stufe_2_pro_los:.2f} M/Los"
-                )
-                if st.button("Endmontage starten", disabled=menge_s2 <= 0):
-                    try:
-                        endmontage_stufe_2(state, menge_s2)
-                        st.session_state["s3_s2_reset"] = True
-                        st.rerun()
-                    except ValueError as e:
-                        st.error(str(e))
+                menge_s2 = st.number_input("Menge (Lose)", min_value=0.0, max_value=verfuegbar_s2, step=1.0, key="s3_s2")
+                st.caption(f"Unfertige danach: **{state.unfertige_erzeugnisse - menge_s2:.0f} Lose** | {state.endmontagekosten_stufe_2_pro_los:.2f} M/Los")
+
+        if st.button("🏭 Produktion starten", disabled=(menge_s1 <= 0 and menge_s2 <= 0), type="primary"):
+            try:
+                if menge_s1 > 0:
+                    produktion_stufe_1(state, menge_s1)
+                if menge_s2 > 0:
+                    endmontage_stufe_2(state, menge_s2)
+                st.session_state["s3_reset"] = True
+                st.rerun()
+            except ValueError as e:
+                st.error(str(e))
 
     if not state.neue_anlage_aktiv and state.jahr >= 3:
         with st.expander("Strategische Option: Neue Anlage kaufen (20M)"):

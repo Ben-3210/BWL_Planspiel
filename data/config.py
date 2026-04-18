@@ -110,6 +110,11 @@ FEATURE_VARIABLE_GEMEINKOSTEN = True
 
 # Diese Werte sind bewusst Modellannahmen für eure digitale Erweiterung.
 MARKETING_NACHFRAGE_FAKTOR = 0.10
+
+# Einkaufspreis Rohmaterial (normalverteilt)
+EINKAUFSPREIS_ERWARTUNGSWERT = 3.0
+EINKAUFSPREIS_STANDARDABWEICHUNG = 0.4   # ± ~13% Schwankung
+EINKAUFSPREIS_MIN = 1.0                  # Untergrenze
 MARKETING_PREIS_FAKTOR = 0.05
 
 # =========================================================
