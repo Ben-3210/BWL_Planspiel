@@ -457,76 +457,6 @@ with st.sidebar:
 
     st.divider()
 
-    # ── Renditekennzahlen ─────────────────────────────────────────────────────
-    st.markdown("**📊 Renditekennzahlen**")
-    r1, r2 = st.columns(2)
-    ros_farbe = _farbe_metrik(kz["Umsatzrendite ROS (%)"], 8, 3)
-    roe_farbe = _farbe_metrik(kz["Eigenkapitalrendite ROE (%)"], 10, 4)
-    roi_farbe = _farbe_metrik(kz["ROI (%)"], 6, 2)
-    gkr_farbe = _farbe_metrik(kz["Gesamtkapitalrendite (%)"], 6, 2)
-
-    r1.markdown(
-        f"<div style='font-size:0.72rem;color:#aaa'>ROS (Umsatzrendite)</div>"
-        f"<div style='font-size:1.0rem;font-weight:700;color:{ros_farbe}'>{kz['Umsatzrendite ROS (%)']:.1f} %</div>",
-        unsafe_allow_html=True,
-    )
-    r2.markdown(
-        f"<div style='font-size:0.72rem;color:#aaa'>ROE (EK-Rendite)</div>"
-        f"<div style='font-size:1.0rem;font-weight:700;color:{roe_farbe}'>{kz['Eigenkapitalrendite ROE (%)']:.1f} %</div>",
-        unsafe_allow_html=True,
-    )
-    r1.markdown(
-        f"<div style='font-size:0.72rem;color:#aaa'>ROI</div>"
-        f"<div style='font-size:1.0rem;font-weight:700;color:{roi_farbe}'>{kz['ROI (%)']:.1f} %</div>",
-        unsafe_allow_html=True,
-    )
-    r2.markdown(
-        f"<div style='font-size:0.72rem;color:#aaa'>GKR</div>"
-        f"<div style='font-size:1.0rem;font-weight:700;color:{gkr_farbe}'>{kz['Gesamtkapitalrendite (%)']:.1f} %</div>",
-        unsafe_allow_html=True,
-    )
-
-    st.divider()
-
-    # ── Working Capital & Cash Flow ───────────────────────────────────────────
-    st.markdown("**⚙️ Liquidität & Kapitalfluss**")
-    wc_farbe = _farbe_metrik(kz["Working Capital"], 20, 5)
-    cf_farbe = _farbe_metrik(kz["Cash Flow"], 5, 0)
-
-    w1, w2 = st.columns(2)
-    w1.markdown(
-        f"<div style='font-size:0.72rem;color:#aaa'>Working Capital</div>"
-        f"<div style='font-size:1.0rem;font-weight:700;color:{wc_farbe}'>{kz['Working Capital']:.1f} M</div>",
-        unsafe_allow_html=True,
-    )
-    w2.markdown(
-        f"<div style='font-size:0.72rem;color:#aaa'>Cash Flow</div>"
-        f"<div style='font-size:1.0rem;font-weight:700;color:{cf_farbe}'>{kz['Cash Flow']:.1f} M</div>",
-        unsafe_allow_html=True,
-    )
-
-    # Liquiditätsgrade
-    st.caption("Liquiditätsgrade (Richtwert: I ≥ 20%, II ≥ 100%, III ≥ 120%)")
-    liq1 = kz["Liquidität I (%)"]
-    liq2 = kz["Liquidität II (%)"]
-    liq3 = kz["Liquidität III (%)"]
-    l1c, l2c, l3c = st.columns(3)
-
-    def _liq_html(label: str, wert, gut: float, ok: float) -> str:
-        if wert == "–":
-            return f"<div style='font-size:0.65rem;color:#aaa'>{label}</div><div style='font-weight:700'>–</div>"
-        farbe = _farbe_metrik(float(wert), gut, ok)
-        return (
-            f"<div style='font-size:0.65rem;color:#aaa'>{label}</div>"
-            f"<div style='font-weight:700;color:{farbe}'>{wert}%</div>"
-        )
-
-    l1c.markdown(_liq_html("Liq. I", liq1, 20, 10), unsafe_allow_html=True)
-    l2c.markdown(_liq_html("Liq. II", liq2, 100, 70), unsafe_allow_html=True)
-    l3c.markdown(_liq_html("Liq. III", liq3, 120, 100), unsafe_allow_html=True)
-
-    st.divider()
-
     # ── Mini-Bilanz ───────────────────────────────────────────────────────────
     st.markdown("**⚖️ Bilanz (Kurzform)**")
     av = kz["Anlagevermögen"]
@@ -913,6 +843,44 @@ if schritt >= 6:
                 )
         else:
             st.success(f"Jahresabschluss Jahr {state.jahr} abgeschlossen.")
+
+            # ── Renditekennzahlen & Liquidität ────────────────────────────────
+            kz_ja = state.kennzahlen_history[-1] if state.kennzahlen_history else berechne_kennzahlen(state)
+            st.markdown("**📊 Renditekennzahlen**")
+            ja_r1, ja_r2 = st.columns(2)
+            ja_r1.markdown(
+                f"<div style='font-size:0.72rem;color:#aaa'>ROS (Umsatzrendite)</div>"
+                f"<div style='font-size:1.0rem;font-weight:700;color:{_farbe_metrik(kz_ja['Umsatzrendite ROS (%)'], 8, 3)}'>{kz_ja['Umsatzrendite ROS (%)']:.1f} %</div>",
+                unsafe_allow_html=True,
+            )
+            ja_r2.markdown(
+                f"<div style='font-size:0.72rem;color:#aaa'>ROE (EK-Rendite)</div>"
+                f"<div style='font-size:1.0rem;font-weight:700;color:{_farbe_metrik(kz_ja['Eigenkapitalrendite ROE (%)'], 10, 4)}'>{kz_ja['Eigenkapitalrendite ROE (%)']:.1f} %</div>",
+                unsafe_allow_html=True,
+            )
+            ja_r1.markdown(
+                f"<div style='font-size:0.72rem;color:#aaa'>ROI</div>"
+                f"<div style='font-size:1.0rem;font-weight:700;color:{_farbe_metrik(kz_ja['ROI (%)'], 6, 2)}'>{kz_ja['ROI (%)']:.1f} %</div>",
+                unsafe_allow_html=True,
+            )
+            ja_r2.markdown(
+                f"<div style='font-size:0.72rem;color:#aaa'>GKR</div>"
+                f"<div style='font-size:1.0rem;font-weight:700;color:{_farbe_metrik(kz_ja['Gesamtkapitalrendite (%)'], 6, 2)}'>{kz_ja['Gesamtkapitalrendite (%)']:.1f} %</div>",
+                unsafe_allow_html=True,
+            )
+
+            st.markdown("**⚙️ Liquidität & Kapitalfluss**")
+            ja_w1, ja_w2 = st.columns(2)
+            ja_w1.markdown(
+                f"<div style='font-size:0.72rem;color:#aaa'>Working Capital</div>"
+                f"<div style='font-size:1.0rem;font-weight:700;color:{_farbe_metrik(kz_ja['Working Capital'], 20, 5)}'>{kz_ja['Working Capital']:.1f} M</div>",
+                unsafe_allow_html=True,
+            )
+            ja_w2.markdown(
+                f"<div style='font-size:0.72rem;color:#aaa'>Cash Flow</div>"
+                f"<div style='font-size:1.0rem;font-weight:700;color:{_farbe_metrik(kz_ja['Cash Flow'], 5, 0)}'>{kz_ja['Cash Flow']:.1f} M</div>",
+                unsafe_allow_html=True,
+            )
 
     spiel_vorbei = state.jahr == SPIELDAUER_JAHRE and state.quartal == 4 and state.jahresabschluss_durchgefuehrt
     kann_weiter = (state.quartal != 4 or state.jahresabschluss_durchgefuehrt) and not spiel_vorbei
