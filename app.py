@@ -215,10 +215,11 @@ def zeige_intro() -> None:
             st.markdown("**📈 Mögliche Vorteile**")
             st.markdown(
                 """
-                - 🚀 **Nachfrageboom** – Marktnachfrage steigt um 30%
-                - 💰 **Rohstoff-Sonderangebot** – Einkaufspreise sinken um 25%
-                - ⚙️ **Prozessoptimierung** – Fertigungskosten sinken um 15%
-                - 🏆 **Exportauftrag** – Einmaliger Umsatzbonus
+                - 📈 **Wirtschaftsboom** – Marktnachfrage steigt um 30%
+                - 🏆 **Großauftrag** – Marktnachfrage steigt um 50%
+                - 🎁 **Lieferantensonderangebot** – Einkaufspreise sinken um 20%
+                - 💎 **Rohstoffpreise im Keller** – Einkaufspreise sinken um 25%
+                - ⚙️ **Lean-Offensive** – Fertigungskosten sinken um 15%
                 - ☀️ **Ruhiges Quartal** – Kein Ereignis
                 """
             )
