@@ -111,6 +111,9 @@ class GameState:
     # -----------------------------
     letzte_tatsaechliche_nachfrage: int = 0
     letzte_verkaufte_menge: int = 0
+    verkauf_durchgefuehrt: bool = False
+    marketing_durchgefuehrt: bool = False
+    neue_unfertige_dieses_quartal: float = 0.0
 
     # -----------------------------
     # Quartalsereignisse
@@ -167,6 +170,9 @@ class GameState:
         self.marketing_index = 1.0
         self.quartalsschritt = 1
         self.jahresabschluss_durchgefuehrt = False
+        self.verkauf_durchgefuehrt = False
+        self.marketing_durchgefuehrt = False
+        self.neue_unfertige_dieses_quartal = 0.0
 
         # Neues Quartalsereignis würfeln und anwenden
         neues_ereignis = wuerfle_ereignis()

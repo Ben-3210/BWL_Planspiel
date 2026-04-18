@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pandas as pd
 import streamlit as st
 
@@ -78,18 +76,247 @@ def kombinierter_nachfrage_index() -> float:
     return state.marketing_index * state.nachfrage_index
 
 
-# ─── HEADER ────────────────────────────────────────────────────────────────────
+def _farbe_metrik(wert: float, schwelle_gut: float, schwelle_ok: float, hoeher_ist_besser: bool = True) -> str:
+    """Gibt eine CSS-Farbe zurück abhängig davon ob der Wert gut/ok/schlecht ist."""
+    if hoeher_ist_besser:
+        if wert >= schwelle_gut:
+            return "#28a745"
+        elif wert >= schwelle_ok:
+            return "#ffc107"
+        else:
+            return "#dc3545"
+    else:
+        if wert <= schwelle_gut:
+            return "#28a745"
+        elif wert <= schwelle_ok:
+            return "#ffc107"
+        else:
+            return "#dc3545"
+
+
+def _kpi_box(label: str, wert: str, farbe: str = "#f0f2f6") -> None:
+    """Rendert eine kompakte KPI-Box mit Hintergrundfarbe."""
+    st.markdown(
+        f"""<div style="background:{farbe};border-radius:6px;padding:6px 10px;margin-bottom:6px;">
+        <div style="font-size:0.72rem;color:#555;line-height:1.2">{label}</div>
+        <div style="font-size:1.05rem;font-weight:700;line-height:1.4">{wert}</div>
+        </div>""",
+        unsafe_allow_html=True,
+    )
+
+
+# ─── SIDEBAR: LIVE-DASHBOARD ────────────────────────────────────────────────────
+
+kz = berechne_kennzahlen(state)
+
+with st.sidebar:
+    st.markdown("## 🏭 Factory AG")
+
+    # ── Zeit ──────────────────────────────────────────────────────────────────
+    t1, t2, t3 = st.columns(3)
+    t1.metric("Jahr", state.jahr)
+    t2.metric("Quartal", state.quartal)
+    t3.metric("Runde", state.runde)
+
+    st.divider()
+
+    # ── Finanzen ──────────────────────────────────────────────────────────────
+    st.markdown("**💰 Finanzen**")
+    f1, f2 = st.columns(2)
+
+    lm_farbe = _farbe_metrik(state.liquide_mittel, 15, 5)
+    f1.markdown(
+        f"<div style='font-size:0.72rem;color:#555'>Liquide Mittel</div>"
+        f"<div style='font-size:1.0rem;font-weight:700;color:{lm_farbe}'>{state.liquide_mittel:.1f} M</div>",
+        unsafe_allow_html=True,
+    )
+    f2.markdown(
+        f"<div style='font-size:0.72rem;color:#555'>Eigenkapital</div>"
+        f"<div style='font-size:1.0rem;font-weight:700'>{state.eigenkapital:.1f} M</div>",
+        unsafe_allow_html=True,
+    )
+    f1.markdown(
+        f"<div style='font-size:0.72rem;color:#555'>Forderungen</div>"
+        f"<div style='font-size:1.0rem;font-weight:700'>{state.forderungen:.1f} M</div>",
+        unsafe_allow_html=True,
+    )
+    f2.markdown(
+        f"<div style='font-size:0.72rem;color:#555'>Darlehen</div>"
+        f"<div style='font-size:1.0rem;font-weight:700;color:#dc3545'>{state.darlehen:.1f} M</div>",
+        unsafe_allow_html=True,
+    )
+
+    st.divider()
+
+    # ── Lagerbestand ──────────────────────────────────────────────────────────
+    st.markdown("**📦 Lagerbestand (Lose)**")
+    st.markdown(
+        f"""<div style="display:flex;align-items:center;gap:4px;font-size:0.85rem;">
+          <div style="background:#e9f5ff;border-radius:6px;padding:6px 8px;text-align:center;flex:1">
+            <div style="font-size:0.65rem;color:#555">Rohmat.</div>
+            <div style="font-weight:700">{state.rohmaterial_lager:.0f}</div>
+          </div>
+          <div style="color:#888">→</div>
+          <div style="background:#fff3cd;border-radius:6px;padding:6px 8px;text-align:center;flex:1">
+            <div style="font-size:0.65rem;color:#555">Unfertig</div>
+            <div style="font-weight:700">{state.unfertige_erzeugnisse:.0f}</div>
+          </div>
+          <div style="color:#888">→</div>
+          <div style="background:#d4edda;border-radius:6px;padding:6px 8px;text-align:center;flex:1">
+            <div style="font-size:0.65rem;color:#555">Fertig</div>
+            <div style="font-weight:700">{state.fertige_erzeugnisse:.0f}</div>
+          </div>
+        </div>""",
+        unsafe_allow_html=True,
+    )
+
+    st.divider()
+
+    # ── Erfolgsgrößen (laufendes Jahr) ────────────────────────────────────────
+    st.markdown("**📈 Erfolgsrechnung (lfd. Jahr)**")
+    _kpi_box("Umsatz", f"{kz['Umsatz']:.1f} M")
+
+    e1, e2 = st.columns(2)
+    ebit_farbe = "#28a745" if kz["EBIT"] >= 0 else "#dc3545"
+    gwn_farbe = "#28a745" if kz["Gewinn n. St."] >= 0 else "#dc3545"
+    e1.markdown(
+        f"<div style='font-size:0.72rem;color:#555'>EBIT</div>"
+        f"<div style='font-size:1.0rem;font-weight:700;color:{ebit_farbe}'>{kz['EBIT']:.1f} M</div>",
+        unsafe_allow_html=True,
+    )
+    e2.markdown(
+        f"<div style='font-size:0.72rem;color:#555'>Gewinn n. St.</div>"
+        f"<div style='font-size:1.0rem;font-weight:700;color:{gwn_farbe}'>{kz['Gewinn n. St.']:.1f} M</div>",
+        unsafe_allow_html=True,
+    )
+
+    # Kosten-Breakdown
+    with st.expander("Kosten-Details"):
+        st.caption(
+            f"Material: **{state.materialkosten:.1f} M**  \n"
+            f"Fertigung: **{state.fertigungskosten:.1f} M**  \n"
+            f"Gemeinkosten: **{state.gemeinkosten:.1f} M**  \n"
+            f"Marketing: **{state.marketingkosten:.1f} M**  \n"
+            f"Zinsen: **{state.zinskosten:.1f} M**  \n"
+            f"AfA: **{state.abschreibungen_periode:.1f} M**"
+        )
+
+    st.divider()
+
+    # ── Renditekennzahlen ─────────────────────────────────────────────────────
+    st.markdown("**📊 Renditekennzahlen**")
+    r1, r2 = st.columns(2)
+    ros_farbe = _farbe_metrik(kz["Umsatzrendite ROS (%)"], 8, 3)
+    roe_farbe = _farbe_metrik(kz["Eigenkapitalrendite ROE (%)"], 10, 4)
+    roi_farbe = _farbe_metrik(kz["ROI (%)"], 6, 2)
+    gkr_farbe = _farbe_metrik(kz["Gesamtkapitalrendite (%)"], 6, 2)
+
+    r1.markdown(
+        f"<div style='font-size:0.72rem;color:#555'>ROS (Umsatzrendite)</div>"
+        f"<div style='font-size:1.0rem;font-weight:700;color:{ros_farbe}'>{kz['Umsatzrendite ROS (%)']:.1f} %</div>",
+        unsafe_allow_html=True,
+    )
+    r2.markdown(
+        f"<div style='font-size:0.72rem;color:#555'>ROE (EK-Rendite)</div>"
+        f"<div style='font-size:1.0rem;font-weight:700;color:{roe_farbe}'>{kz['Eigenkapitalrendite ROE (%)']:.1f} %</div>",
+        unsafe_allow_html=True,
+    )
+    r1.markdown(
+        f"<div style='font-size:0.72rem;color:#555'>ROI</div>"
+        f"<div style='font-size:1.0rem;font-weight:700;color:{roi_farbe}'>{kz['ROI (%)']:.1f} %</div>",
+        unsafe_allow_html=True,
+    )
+    r2.markdown(
+        f"<div style='font-size:0.72rem;color:#555'>GKR</div>"
+        f"<div style='font-size:1.0rem;font-weight:700;color:{gkr_farbe}'>{kz['Gesamtkapitalrendite (%)']:.1f} %</div>",
+        unsafe_allow_html=True,
+    )
+
+    st.divider()
+
+    # ── Working Capital & Cash Flow ───────────────────────────────────────────
+    st.markdown("**⚙️ Liquidität & Kapitalfluss**")
+    wc_farbe = _farbe_metrik(kz["Working Capital"], 20, 5)
+    cf_farbe = _farbe_metrik(kz["Cash Flow"], 5, 0)
+
+    w1, w2 = st.columns(2)
+    w1.markdown(
+        f"<div style='font-size:0.72rem;color:#555'>Working Capital</div>"
+        f"<div style='font-size:1.0rem;font-weight:700;color:{wc_farbe}'>{kz['Working Capital']:.1f} M</div>",
+        unsafe_allow_html=True,
+    )
+    w2.markdown(
+        f"<div style='font-size:0.72rem;color:#555'>Cash Flow</div>"
+        f"<div style='font-size:1.0rem;font-weight:700;color:{cf_farbe}'>{kz['Cash Flow']:.1f} M</div>",
+        unsafe_allow_html=True,
+    )
+
+    # Liquiditätsgrade
+    st.caption("Liquiditätsgrade (Richtwert: I ≥ 20%, II ≥ 100%, III ≥ 120%)")
+    liq1 = kz["Liquidität I (%)"]
+    liq2 = kz["Liquidität II (%)"]
+    liq3 = kz["Liquidität III (%)"]
+    l1c, l2c, l3c = st.columns(3)
+
+    def _liq_html(label: str, wert, gut: float, ok: float) -> str:
+        if wert == "–":
+            return f"<div style='font-size:0.65rem;color:#555'>{label}</div><div style='font-weight:700'>–</div>"
+        farbe = _farbe_metrik(float(wert), gut, ok)
+        return (
+            f"<div style='font-size:0.65rem;color:#555'>{label}</div>"
+            f"<div style='font-weight:700;color:{farbe}'>{wert}%</div>"
+        )
+
+    l1c.markdown(_liq_html("Liq. I", liq1, 20, 10), unsafe_allow_html=True)
+    l2c.markdown(_liq_html("Liq. II", liq2, 100, 70), unsafe_allow_html=True)
+    l3c.markdown(_liq_html("Liq. III", liq3, 120, 100), unsafe_allow_html=True)
+
+    st.divider()
+
+    # ── Mini-Bilanz ───────────────────────────────────────────────────────────
+    st.markdown("**⚖️ Bilanz (Kurzform)**")
+    av = kz["Anlagevermögen"]
+    uv = kz["Umlaufvermögen"]
+    ek = kz["Eigenkapital"]
+    fk = kz["Fremdkapital (Darlehen)"]
+    gk = kz["Gesamtkapital"]
+
+    b1, b2 = st.columns(2)
+    b1.markdown(
+        f"<div style='font-size:0.72rem;color:#555;font-weight:600'>Aktiva {gk:.0f} M</div>"
+        f"<div style='font-size:0.72rem'>AV: {av:.1f} M</div>"
+        f"<div style='font-size:0.72rem'>UV: {uv:.1f} M</div>",
+        unsafe_allow_html=True,
+    )
+    b2.markdown(
+        f"<div style='font-size:0.72rem;color:#555;font-weight:600'>Passiva {gk:.0f} M</div>"
+        f"<div style='font-size:0.72rem'>EK: {ek:.1f} M</div>"
+        f"<div style='font-size:0.72rem'>FK: {fk:.1f} M</div>",
+        unsafe_allow_html=True,
+    )
+
+    # Kapitalumschlag
+    st.caption(f"Kapitalumschlag: **{kz['Kapitalumschlag']:.2f}x**")
+
+    # ── Verlaufschart ─────────────────────────────────────────────────────────
+    if state.kennzahlen_history:
+        st.divider()
+        st.markdown("**📉 Jahresverlauf**")
+        df_hist = pd.DataFrame(state.kennzahlen_history)
+        st.line_chart(
+            df_hist.set_index("Jahr")[["Umsatz", "EBIT", "Gewinn n. St."]],
+            height=160,
+        )
+
+    st.divider()
+    if st.button("↺ Spiel zurücksetzen", use_container_width=True):
+        reset_game()
+        st.rerun()
+
+
+# ─── HAUPTBEREICH ──────────────────────────────────────────────────────────────
 
 st.title("🏭 Factory Planspiel")
-
-h1, h2, h3, h4, h5 = st.columns(5)
-h1.metric("Jahr", state.jahr)
-h2.metric("Quartal", state.quartal)
-h3.metric("Runde", state.runde)
-h4.metric("Liquide Mittel", f"{state.liquide_mittel:.1f} M")
-h5.metric("Eigenkapital", f"{state.eigenkapital:.1f} M")
-
-st.divider()
 
 # ─── EREIGNIS-BANNER ───────────────────────────────────────────────────────────
 
@@ -103,8 +330,6 @@ if state.aktuelles_ereignis:
 elif state.runde > 1:
     st.info("☀️ Ruhiges Quartal – keine besonderen Ereignisse.")
 
-st.divider()
-
 # ─── FORTSCHRITTSANZEIGE ───────────────────────────────────────────────────────
 
 SCHRITT_NAMEN = ["Forderungen", "Verkauf", "Produktion", "Einkauf", "Gemeinkosten", "Abschluss"]
@@ -112,7 +337,7 @@ SCHRITT_ICONS = ["💰", "🚚", "🏭", "📦", "📋", "✅"]
 
 schritt = state.quartalsschritt
 
-st.subheader(f"Q{state.quartal} / Jahr {state.jahr}  –  Schritt {min(schritt, 6)} von 6")
+st.subheader(f"Q{state.quartal} / Jahr {state.jahr}")
 st.progress((schritt - 1) / 6)
 
 prog_cols = st.columns(6)
@@ -138,8 +363,7 @@ st.divider()
 # ─── SCHRITT 1: FORDERUNGEN EINZIEHEN ─────────────────────────────────────────
 
 if schritt == 1:
-    st.markdown("## 💰 Schritt 1: Forderungen einziehen")
-    st.caption("Kunden begleichen ihre offenen Rechnungen aus dem Vorquartal.")
+    st.markdown("## 💰 Forderungen einziehen")
 
     c1, c2 = st.columns(2)
     c1.metric("Offene Forderungen", f"{state.forderungen:.2f} M")
@@ -165,120 +389,98 @@ if schritt == 1:
             run_action(darlehen_tilgen, state, tilgung, success_message=f"{tilgung:.2f} M getilgt.")
 
 elif schritt > 1:
-    with st.expander("✅ Schritt 1: Forderungen einziehen"):
+    with st.expander("✅ Forderungen einziehen"):
         st.success("Erledigt.")
 
 # ─── SCHRITT 2: PRODUKTE VERKAUFEN ────────────────────────────────────────────
 
 if schritt == 2:
-    st.markdown("## 🚚 Schritt 2: Produkte verkaufen")
-    st.caption("Preis festlegen, Marketing einsetzen und fertige Erzeugnisse anbieten. Der Markt entscheidet selbst wie viel er abnimmt.")
+    st.markdown("## 🚚 Produkte verkaufen")
 
     idx = kombinierter_nachfrage_index()
-    erwartete_nachfrage = berechne_nachfrage(state.verkaufspreis, idx)
-    spanne_low, spanne_high = berechne_nachfrage_spanne(state.verkaufspreis, idx)
+    preis_aktuell = st.session_state.get("s2_preis", state.verkaufspreis)
+    erwartete_nachfrage = berechne_nachfrage(preis_aktuell, idx)
+    spanne_low, spanne_high = berechne_nachfrage_spanne(preis_aktuell, idx)
 
     # Ergebnis des letzten Verkaufs anzeigen (einmalig nach rerun)
     letztes_ergebnis = st.session_state.pop("verkauf_ergebnis", None)
     if letztes_ergebnis:
         vk = letztes_ergebnis["verkauft"]
         an = letztes_ergebnis["angebot"]
-        nf = letztes_ergebnis["nachfrage"]
+        los_str = lambda n: f"{n} Los" if n == 1 else f"{n} Lose"
         if vk == 0:
-            st.error(f"Kein Absatz – der Markt hatte dieses Quartal eine Nachfrage von {nf} Losen, aber Ihr Angebot kam nicht an.")
+            st.error("Kein Absatz – kein Los wurde verkauft.")
         elif vk < an:
-            st.warning(
-                f"Markt hat nur **{nf} Lose** nachgefragt – **{vk} von {an} Losen** verkauft. "
-                f"{an - vk} Lose verbleiben im Lager."
-            )
+            st.warning(f"**{los_str(vk)}** verkauft – {an - vk} {'Los verbleibt' if an - vk == 1 else 'Lose verbleiben'} im Lager.")
         else:
-            st.success(
-                f"Alle **{vk} Lose** verkauft! Markt hätte sogar **{nf} Lose** abgenommen."
-                + (" Mehr Lagerbestand wäre vorteilhaft gewesen." if nf > vk else "")
-            )
+            st.success(f"**{los_str(vk)}** verkauft.")
 
     m1, m2, m3 = st.columns(3)
     m1.metric("Fertige Erzeugnisse", f"{state.fertige_erzeugnisse:.0f} Lose")
     m2.metric("Erwartete Nachfrage", f"~{erwartete_nachfrage} Lose",
               help=f"Realistische Spanne (95%): {spanne_low}–{spanne_high} Lose")
-    m3.metric("Aktueller Preis", f"{state.verkaufspreis:.1f} M/Los")
+    m3.metric("Aktueller Preis", f"{preis_aktuell:.1f} M/Los")
 
-    st.caption(f"Marktschwankung: realistisch **{spanne_low}–{spanne_high} Lose** dieses Quartal (95%-Spanne)")
+    if not state.verkauf_durchgefuehrt:
+        if state.fertige_erzeugnisse <= 0:
+            st.info("Kein Fertigwarenbestand – kein Verkauf möglich.")
+        else:
+            v_col1, v_col2 = st.columns(2)
 
-    v_col1, v_col2 = st.columns(2)
+            with v_col1:
+                st.write("**Preisstrategie**")
+                neuer_preis = st.number_input(
+                    "Verkaufspreis (M)", value=float(state.verkaufspreis), min_value=1.0, step=1.0, key="s2_preis"
+                )
+                state.verkaufspreis = neuer_preis
 
-    with v_col1:
-        st.write("**Preisstrategie**")
-        neuer_preis = st.number_input(
-            "Verkaufspreis (M)", value=float(state.verkaufspreis), min_value=1.0, step=1.0, key="s2_preis"
-        )
-        vorschau_erwartet = berechne_nachfrage(neuer_preis, idx)
-        vorschau_low, vorschau_high = berechne_nachfrage_spanne(neuer_preis, idx)
-        st.caption(
-            f"Erwartete Nachfrage: **~{vorschau_erwartet} Lose** (Spanne: {vorschau_low}–{vorschau_high})  \n"
-            f"Max. Umsatz (Erwartung): **{vorschau_erwartet * neuer_preis:.0f} M**"
-        )
-        if st.button("Preis setzen"):
-            state.verkaufspreis = neuer_preis
-            st.rerun()
+                st.write("**Marketing (optional)**")
+                if state.marketing_durchgefuehrt:
+                    st.success(f"{state.marketingkosten:.1f} M investiert.")
+                else:
+                    marketing_betrag = st.number_input("Budget (M)", min_value=0.0, step=0.5, key="s2_marketing")
+                    if st.button("Marketing buchen", disabled=marketing_betrag <= 0):
+                        run_action(
+                            marketing_ausgeben, state, marketing_betrag,
+                            success_message=f"{marketing_betrag:.1f} M Marketing gebucht.",
+                        )
 
-        st.write("**Marketing (optional)**")
-        marketing_betrag = st.number_input("Budget (M)", min_value=0.0, step=0.5, key="s2_marketing")
-        if marketing_betrag > 0:
-            idx_vorschau = (1.0 + marketing_betrag * 0.10) * state.nachfrage_index
-            nf_mit_mkt = berechne_nachfrage(state.verkaufspreis, idx_vorschau)
-            low_mkt, high_mkt = berechne_nachfrage_spanne(state.verkaufspreis, idx_vorschau)
-            st.caption(f"Mit Marketing: **~{nf_mit_mkt} Lose** (Spanne: {low_mkt}–{high_mkt})")
-        if st.button("Marketing buchen", disabled=marketing_betrag <= 0):
-            run_action(
-                marketing_ausgeben, state, marketing_betrag,
-                success_message=f"{marketing_betrag:.1f} M Marketing gebucht.",
-            )
+            with v_col2:
+                st.write("**Verkaufsangebot**")
+                max_angebot = int(state.fertige_erzeugnisse)
+                verkaufs_menge = st.number_input(
+                    "Angebot (Lose)", min_value=0.0, max_value=float(max_angebot), step=1.0, key="s2_menge"
+                )
+                sofortzahlung = st.checkbox("Sofortzahlung (sonst auf Ziel)", key="s2_sofort")
 
-    with v_col2:
-        st.write("**Verkaufsangebot**")
-        st.caption(
-            "Gib an wie viele Lose du anbietest. Der Markt nimmt ab was er will – "
-            "überschüssige Ware bleibt im Lager."
-        )
-        max_angebot = int(state.fertige_erzeugnisse)
-        verkaufs_menge = st.number_input(
-            "Angebot (Lose)", min_value=0.0, max_value=float(max_angebot), step=1.0, key="s2_menge"
-        )
-        sofortzahlung = st.checkbox("Sofortzahlung (sonst auf Ziel)", key="s2_sofort")
+                if verkaufs_menge > 0:
+                    if verkaufs_menge > spanne_high:
+                        st.warning(f"Angebot ({int(verkaufs_menge)} Lose) liegt über der erwarteten Spanne – wahrscheinlich bleibt Ware übrig.")
 
-        if verkaufs_menge > 0:
-            art = "sofort" if sofortzahlung else "als Forderung"
-            umsatz_max = verkaufs_menge * state.verkaufspreis
-            st.caption(f"Maximaler Umsatz bei Vollabsatz: **{umsatz_max:.1f} M** ({art})")
-            if verkaufs_menge > spanne_high:
-                st.warning(f"Angebot ({int(verkaufs_menge)} Lose) liegt über der erwarteten Spanne – wahrscheinlich bleibt Ware übrig.")
-
-        if st.button("🚚 Angebot aufgeben", disabled=verkaufs_menge <= 0, type="primary"):
-            try:
-                produkte_verkaufen(state, verkaufs_menge, sofortzahlung=sofortzahlung)
-                st.session_state.verkauf_ergebnis = {
-                    "verkauft": state.letzte_verkaufte_menge,
-                    "angebot": int(verkaufs_menge),
-                    "nachfrage": state.letzte_tatsaechliche_nachfrage,
-                }
-                st.rerun()
-            except ValueError as e:
-                st.error(str(e))
+                if st.button("🚚 Angebot aufgeben", disabled=verkaufs_menge <= 0, type="primary"):
+                    try:
+                        produkte_verkaufen(state, verkaufs_menge, sofortzahlung=sofortzahlung)
+                        st.session_state.verkauf_ergebnis = {
+                            "verkauft": state.letzte_verkaufte_menge,
+                            "angebot": int(verkaufs_menge),
+                            "nachfrage": state.letzte_tatsaechliche_nachfrage,
+                        }
+                        st.rerun()
+                    except ValueError as e:
+                        st.error(str(e))
 
     st.divider()
     if st.button("Schritt abschließen →", type="primary", key="s2_done"):
         advance_schritt()
 
 elif schritt > 2:
-    with st.expander("✅ Schritt 2: Produkte verkaufen"):
+    with st.expander("✅ Produkte verkaufen"):
         st.success("Erledigt.")
 
 # ─── SCHRITT 3: PRODUKTION ────────────────────────────────────────────────────
 
 if schritt == 3:
-    st.markdown("## 🏭 Schritt 3: Produktion")
-    st.caption("Endmontage abschließen und neue Fertigungsaufträge starten.")
+    st.markdown("## 🏭 Produktion")
 
     if state.neue_anlage_aktiv:
         st.info("Neue einstufige Anlage aktiv – direkt Rohstoff → Fertigprodukt.")
@@ -296,30 +498,50 @@ if schritt == 3:
         p_col1, p_col2 = st.columns(2)
 
         with p_col1:
-            st.write("**Endmontage (Stufe 2)**")
-            st.caption(
-                f"Unfertige Erzeugnisse: {state.unfertige_erzeugnisse:.0f} Lose | "
-                f"Kosten: {state.endmontagekosten_stufe_2_pro_los:.2f} M/Los"
-            )
-            menge_s2 = st.number_input("Menge Stufe 2", min_value=0.0, step=1.0, key="s3_s2")
-            if st.button("Endmontage starten", disabled=menge_s2 <= 0):
-                run_action(
-                    endmontage_stufe_2, state, menge_s2,
-                    success_message=f"{menge_s2:.0f} Lose fertiggestellt.",
+            st.write("**Fertigungsstufe 1**")
+            if state.rohmaterial_lager <= 0:
+                st.info("Kein Rohmaterial vorhanden.")
+            else:
+                if st.session_state.pop("s3_s1_reset", False):
+                    st.session_state["s3_s1"] = 0.0
+                menge_s1 = st.number_input("Menge Stufe 1", min_value=0.0, max_value=float(state.rohmaterial_lager), step=1.0, key="s3_s1")
+                rohmat_danach = state.rohmaterial_lager - menge_s1
+                st.caption(
+                    f"Rohmaterial: **{rohmat_danach:.0f} Lose** | "
+                    f"Kosten: {state.fertigungskosten_pro_los:.2f} M/Los"
                 )
+                if st.button("Stufe 1 starten", disabled=menge_s1 <= 0):
+                    try:
+                        produktion_stufe_1(state, menge_s1)
+                        st.session_state["s3_s1_reset"] = True
+                        st.rerun()
+                    except ValueError as e:
+                        st.error(str(e))
 
         with p_col2:
-            st.write("**Fertigungsstufe 1**")
-            st.caption(
-                f"Rohmaterial: {state.rohmaterial_lager:.0f} Lose | "
-                f"Kosten: {state.fertigungskosten_pro_los:.2f} M/Los"
-            )
-            menge_s1 = st.number_input("Menge Stufe 1", min_value=0.0, step=1.0, key="s3_s1")
-            if st.button("Stufe 1 starten", disabled=menge_s1 <= 0):
-                run_action(
-                    produktion_stufe_1, state, menge_s1,
-                    success_message=f"{menge_s1:.0f} Lose in Stufe 1 gefertigt.",
+            st.write("**Endmontage (Stufe 2)**")
+            verfuegbar_s2 = max(0.0, state.unfertige_erzeugnisse - state.neue_unfertige_dieses_quartal)
+            if verfuegbar_s2 <= 0:
+                if state.neue_unfertige_dieses_quartal > 0:
+                    st.info(f"{state.neue_unfertige_dieses_quartal:.0f} {'Los wurde' if state.neue_unfertige_dieses_quartal == 1 else 'Lose wurden'} dieses Quartal in Stufe 1 gefertigt – erst nächstes Quartal fertigstellbar.")
+                else:
+                    st.info("Keine unfertigen Erzeugnisse vorhanden.")
+            else:
+                if st.session_state.pop("s3_s2_reset", False):
+                    st.session_state["s3_s2"] = 0.0
+                menge_s2 = st.number_input("Menge Stufe 2", min_value=0.0, max_value=verfuegbar_s2, step=1.0, key="s3_s2")
+                unfertig_danach = state.unfertige_erzeugnisse - menge_s2
+                st.caption(
+                    f"Unfertige Erzeugnisse: **{unfertig_danach:.0f} Lose** | "
+                    f"Kosten: {state.endmontagekosten_stufe_2_pro_los:.2f} M/Los"
                 )
+                if st.button("Endmontage starten", disabled=menge_s2 <= 0):
+                    try:
+                        endmontage_stufe_2(state, menge_s2)
+                        st.session_state["s3_s2_reset"] = True
+                        st.rerun()
+                    except ValueError as e:
+                        st.error(str(e))
 
     if not state.neue_anlage_aktiv and state.jahr >= 3:
         with st.expander("Strategische Option: Neue Anlage kaufen (20M)"):
@@ -338,14 +560,13 @@ if schritt == 3:
         advance_schritt()
 
 elif schritt > 3:
-    with st.expander("✅ Schritt 3: Produktion"):
+    with st.expander("✅ Produktion"):
         st.success("Erledigt.")
 
 # ─── SCHRITT 4: MATERIALEINKAUF ───────────────────────────────────────────────
 
 if schritt == 4:
-    st.markdown("## 📦 Schritt 4: Materialeinkauf")
-    st.caption("Rohmaterial für die nächsten Produktionsläufe bestellen.")
+    st.markdown("## 📦 Materialeinkauf")
 
     e1, e2, e3 = st.columns(3)
     e1.metric("Rohmaterial auf Lager", f"{state.rohmaterial_lager:.0f} Lose")
@@ -375,14 +596,13 @@ if schritt == 4:
             advance_schritt()
 
 elif schritt > 4:
-    with st.expander("✅ Schritt 4: Materialeinkauf"):
+    with st.expander("✅ Materialeinkauf"):
         st.success("Erledigt.")
 
 # ─── SCHRITT 5: GEMEINKOSTEN ZAHLEN ───────────────────────────────────────────
 
 if schritt == 5:
-    st.markdown("## 📋 Schritt 5: Gemeinkosten zahlen")
-    st.caption("Laufende Betriebskosten (Miete, Verwaltung, Energie) begleichen.")
+    st.markdown("## 📋 Gemeinkosten zahlen")
 
     gk_betrag = 6.0 if state.jahr == 1 else 5.0
     g1, g2 = st.columns(2)
@@ -399,13 +619,13 @@ if schritt == 5:
         )
 
 elif schritt > 5:
-    with st.expander("✅ Schritt 5: Gemeinkosten zahlen"):
+    with st.expander("✅ Gemeinkosten zahlen"):
         st.success("Erledigt.")
 
 # ─── SCHRITT 6: QUARTAL ABSCHLIESSEN ──────────────────────────────────────────
 
 if schritt >= 6:
-    st.markdown("## ✅ Schritt 6: Quartal abschließen")
+    st.markdown("## ✅ Quartal abschließen")
 
     if state.quartal == 4:
         st.warning("**Q4:** Führe zuerst den Jahresabschluss durch, bevor du ins neue Jahr wechselst.")
@@ -443,19 +663,12 @@ if schritt >= 6:
     if st.button("▶ Nächstes Quartal", type="primary", disabled=not kann_weiter):
         run_action(state.naechstes_quartal)
 
-# ─── SPIELFELD-BILD ────────────────────────────────────────────────────────────
-
-image_path = Path(__file__).parent / "assets" / "factory_board.jpeg"
-if image_path.exists():
-    with st.expander("🗺️ Spielfeld anzeigen"):
-        st.image(str(image_path), use_container_width=True)
-
 st.divider()
 
-# ─── KENNZAHLEN & CHARTS ───────────────────────────────────────────────────────
+# ─── HISTORISCHE KENNZAHLEN & CHARTS ──────────────────────────────────────────
 
 if state.kennzahlen_history:
-    with st.expander("📊 Kennzahlen & Verlauf"):
+    with st.expander("📊 Historische Kennzahlen & Jahresvergleich"):
         df = pd.DataFrame(state.kennzahlen_history)
         tab1, tab2 = st.tabs(["Tabelle", "Charts"])
 
@@ -480,29 +693,9 @@ if state.kennzahlen_history:
                 if "Eigenkapital" in df.columns:
                     st.line_chart(df.set_index("Jahr")[["Eigenkapital", "Gesamtkapital", "Fremdkapital (Darlehen)"]])
 
-with st.expander("🔢 Aktuelle Kennzahlen"):
-    kz = berechne_kennzahlen(state)
-    kz1, kz2, kz3 = st.columns(3)
-    kz1.metric("Umsatzrendite ROS", f"{kz['Umsatzrendite ROS (%)']:.1f} %")
-    kz1.metric("Eigenkapitalrendite ROE", f"{kz['Eigenkapitalrendite ROE (%)']:.1f} %")
-    kz1.metric("ROI", f"{kz['ROI (%)']:.1f} %")
-    kz2.metric("Anlagevermögen", f"{kz['Anlagevermögen']:.1f} M")
-    kz2.metric("Umlaufvermögen", f"{kz['Umlaufvermögen']:.1f} M")
-    kz2.metric("Gesamtkapital", f"{kz['Gesamtkapital']:.1f} M")
-    kz3.metric("Working Capital", f"{kz['Working Capital']:.1f} M")
-    kz3.metric("Cash Flow", f"{kz['Cash Flow']:.1f} M")
-    kz3.metric("EBIT", f"{kz['EBIT']:.1f} M")
-
 # ─── VERLAUF ───────────────────────────────────────────────────────────────────
 
 if state.verlauf:
-    with st.expander("🗒️ Verlauf"):
+    with st.expander("🗒️ Aktionsprotokoll"):
         for eintrag in reversed(state.verlauf):
             st.write(f"- {eintrag}")
-
-# ─── SPIELSTEUERUNG ────────────────────────────────────────────────────────────
-
-st.divider()
-if st.button("↺ Spiel zurücksetzen"):
-    reset_game()
-    st.rerun()

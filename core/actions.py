@@ -83,6 +83,7 @@ def produktion_stufe_1(state: GameState, menge: float) -> None:
     state.liquide_mittel -= kosten
     state.fertigungskosten += kosten
     state.produktionsmenge = menge
+    state.neue_unfertige_dieses_quartal += menge
     state.log(f"Fertigungsstufe 1: {menge:.0f} Lose, Kosten {kosten:.2f} M.")
 
 
@@ -172,6 +173,7 @@ def produkte_verkaufen(state: GameState, menge_angebot: float, sofortzahlung: bo
     # Ergebnis im State speichern (für UI-Feedback)
     state.letzte_tatsaechliche_nachfrage = tatsaechliche_nachfrage
     state.letzte_verkaufte_menge = tatsaechlich_verkauft
+    state.verkauf_durchgefuehrt = True
 
     if tatsaechlich_verkauft <= 0:
         state.log(
@@ -249,6 +251,7 @@ def marketing_ausgeben(state: GameState, betrag: float) -> None:
     state.marketingkosten += betrag
     # Nachfrage steigt um 10% pro investierter Million (MARKETING_NACHFRAGE_FAKTOR = 0.10)
     state.marketing_index = 1.0 + betrag * MARKETING_NACHFRAGE_FAKTOR
+    state.marketing_durchgefuehrt = True
     state.log(f"Marketing: {betrag:.2f} M investiert → Nachfrage-Index {state.marketing_index:.2f}.")
 
 
