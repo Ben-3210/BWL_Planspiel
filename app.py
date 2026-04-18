@@ -108,7 +108,7 @@ def zeige_intro() -> None:
             | 6 | ✅ **Quartal abschließen** | Im 4. Quartal: Jahresabschluss mit Zinsen, Abschreibungen und Steuern |
 
             > **Wichtig:** Verkaufte Elektromotoren werden erst **im Folgequartal bezahlt** (Lieferung auf Ziel),
-            > außer du wählst die Option "Sofortzahlung" mit Abzug.
+            > außer du wählst die Option "Sofortzahlung" – dann erhältst du das Geld sofort, aber mit **5% Skonto-Abzug**.
             """
         )
 
@@ -662,19 +662,19 @@ if schritt == 2:
     if letztes_ergebnis:
         vk = letztes_ergebnis["verkauft"]
         an = letztes_ergebnis["angebot"]
-        los_str = lambda n: f"{n} Los" if n == 1 else f"{n} Lose"
+        em_str = lambda n: f"{n} Elektromotor" if n == 1 else f"{n} Elektromotoren"
         if vk == 0:
-            st.error("Kein Absatz – kein Los wurde verkauft.")
+            st.error("Kein Absatz – kein Elektromotor wurde verkauft.")
         elif vk < an:
-            st.warning(f"**{los_str(vk)}** verkauft – {an - vk} {'Los verbleibt' if an - vk == 1 else 'Lose verbleiben'} im Lager.")
+            st.warning(f"**{em_str(vk)}** verkauft – {an - vk} {'Elektromotor verbleibt' if an - vk == 1 else 'Elektromotoren verbleiben'} im Lager.")
         else:
-            st.success(f"**{los_str(vk)}** verkauft.")
+            st.success(f"**{em_str(vk)}** verkauft.")
 
     m1, m2, m3 = st.columns(3)
-    m1.metric("Fertige Erzeugnisse", f"{state.fertige_erzeugnisse:.0f} Lose")
-    m2.metric("Erwartete Nachfrage", f"~{erwartete_nachfrage} Lose",
-              help=f"Realistische Spanne (95%): {spanne_low}–{spanne_high} Lose")
-    m3.metric("Aktueller Preis", f"{preis_aktuell:.1f} M/Los")
+    m1.metric("Fertige Elektromotoren", f"{state.fertige_erzeugnisse:.0f} Stk.")
+    m2.metric("Erwartete Nachfrage", f"~{erwartete_nachfrage} Stk.",
+              help=f"Realistische Spanne (95%): {spanne_low}–{spanne_high} Stk.")
+    m3.metric("Aktueller Preis", f"{preis_aktuell:.1f} M/Stk.")
 
     if not state.verkauf_durchgefuehrt:
         if state.fertige_erzeugnisse <= 0:
@@ -704,13 +704,20 @@ if schritt == 2:
                 st.write("**Verkaufsangebot**")
                 max_angebot = int(state.fertige_erzeugnisse)
                 verkaufs_menge = st.number_input(
-                    "Angebot (Lose)", min_value=0.0, max_value=float(max_angebot), step=1.0, key="s2_menge"
+                    "Angebot (Elektromotoren)", min_value=0.0, max_value=float(max_angebot), step=1.0, key="s2_menge"
                 )
-                sofortzahlung = st.checkbox("Sofortzahlung (sonst auf Ziel)", key="s2_sofort")
+                sofortzahlung = st.checkbox("Sofortzahlung (nur auf Ziel)", key="s2_sofort")
+                if verkaufs_menge > 0:
+                    umsatz_brutto = round(verkaufs_menge * state.verkaufspreis, 2)
+                    skonto_betrag = round(umsatz_brutto * 0.05, 2)
+                    if sofortzahlung:
+                        st.caption(f"Sofort: **{umsatz_brutto - skonto_betrag:.1f} M** (−{skonto_betrag:.1f} M Skonto vs. auf Ziel)")
+                    else:
+                        st.caption(f"Auf Ziel: **{umsatz_brutto:.1f} M** nächstes Quartal (+{skonto_betrag:.1f} M mehr als Sofortzahlung)")
 
                 if verkaufs_menge > 0:
                     if verkaufs_menge > spanne_high:
-                        st.warning(f"Angebot ({int(verkaufs_menge)} Lose) liegt über der erwarteten Spanne – wahrscheinlich bleibt Ware übrig.")
+                        st.warning(f"Angebot ({int(verkaufs_menge)} Stk.) liegt über der erwarteten Spanne – wahrscheinlich bleibt Ware übrig.")
 
                 if st.button("🚚 Angebot aufgeben", disabled=verkaufs_menge <= 0, type="primary"):
                     try:
@@ -740,21 +747,21 @@ if schritt == 3:
     if state.neue_anlage_aktiv:
         st.info("Neue einstufige Anlage aktiv – direkt Rohstoff → Fertigprodukt.")
         p1, p2, p3 = st.columns(3)
-        p1.metric("Rohmaterial", f"{state.rohmaterial_lager:.0f} Lose")
-        p2.metric("Fertige Erzeugnisse", f"{state.fertige_erzeugnisse:.0f} Lose")
-        p3.metric("Kosten/Los", f"{state.fertigungskosten_pro_los:.2f} M")
-        menge_neu = st.number_input("Produktionsmenge (Lose)", min_value=0.0, step=1.0, key="s3_neu")
+        p1.metric("Rohmaterial", f"{state.rohmaterial_lager:.0f} Einheiten")
+        p2.metric("Fertige Elektromotoren", f"{state.fertige_erzeugnisse:.0f} Stk.")
+        p3.metric("Kosten/Einheit", f"{state.fertigungskosten_pro_los:.2f} M")
+        menge_neu = st.number_input("Produktionsmenge (Einheiten)", min_value=0.0, step=1.0, key="s3_neu")
         if st.button("Produktion starten", disabled=menge_neu <= 0):
             run_action(
                 produktion_neue_anlage, state, menge_neu,
-                success_message=f"{menge_neu:.0f} Lose produziert.",
+                success_message=f"{menge_neu:.0f} Elektromotoren produziert.",
             )
     else:
         verfuegbar_s2 = max(0.0, state.unfertige_erzeugnisse - state.neue_unfertige_dieses_quartal)
         p_col1, p_col2 = st.columns(2)
 
         with p_col1:
-            st.write("**Fertigungsstufe 1**")
+            st.write("**Teilefertigung (Stufe 1)**")
             if state.stufe1_durchgefuehrt:
                 st.success("Fertigung erfolgt.")
                 menge_s1 = 0.0
@@ -764,8 +771,8 @@ if schritt == 3:
             else:
                 if st.session_state.pop("s3_reset", False):
                     st.session_state["s3_s1"] = 0.0
-                menge_s1 = st.number_input("Menge (Lose)", min_value=0.0, max_value=float(state.rohmaterial_lager), step=1.0, key="s3_s1")
-                st.caption(f"Rohmaterial danach: **{state.rohmaterial_lager - menge_s1:.0f} Lose** | {state.fertigungskosten_pro_los:.2f} M/Los")
+                menge_s1 = st.number_input("Menge (Einheiten)", min_value=0.0, max_value=float(state.rohmaterial_lager), step=1.0, key="s3_s1")
+                st.caption(f"Rohmaterial danach: **{state.rohmaterial_lager - menge_s1:.0f} Einheiten** | {state.fertigungskosten_pro_los:.2f} M/Einheit")
 
         with p_col2:
             st.write("**Endmontage (Stufe 2)**")
@@ -773,13 +780,13 @@ if schritt == 3:
                 st.success("Fertigung erfolgt.")
                 menge_s2 = 0.0
             elif verfuegbar_s2 <= 0:
-                st.info("Keine unfertigen Erzeugnisse verfügbar.")
+                st.info("Keine Vorfertigungen verfügbar.")
                 menge_s2 = 0.0
             else:
                 if st.session_state.pop("s3_reset", False):
                     st.session_state["s3_s2"] = 0.0
-                menge_s2 = st.number_input("Menge (Lose)", min_value=0.0, max_value=verfuegbar_s2, step=1.0, key="s3_s2")
-                st.caption(f"Unfertige danach: **{state.unfertige_erzeugnisse - menge_s2:.0f} Lose** | {state.endmontagekosten_stufe_2_pro_los:.2f} M/Los")
+                menge_s2 = st.number_input("Menge (Einheiten)", min_value=0.0, max_value=verfuegbar_s2, step=1.0, key="s3_s2")
+                st.caption(f"Vorfertigungen danach: **{state.unfertige_erzeugnisse - menge_s2:.0f} Einheiten** | {state.endmontagekosten_stufe_2_pro_los:.2f} M/Einheit")
 
         if st.button("🏭 Produktion starten", disabled=(menge_s1 <= 0 and menge_s2 <= 0), type="primary"):
             try:
@@ -795,8 +802,8 @@ if schritt == 3:
     if not state.neue_anlage_aktiv and state.jahr >= 3:
         with st.expander("Strategische Option: Neue Anlage kaufen (20M)"):
             st.markdown(
-                "**Neue einstufige Anlage:** 3M/Los | Einsparung 1M/Los gegenüber alter Anlage  \n"
-                "Break-Even bei 3 Losen/Quartal: ~1,7 Jahre | Zusatz-AfA: 4M/Jahr"
+                "**Neue einstufige Anlage:** 3M/Einheit | Einsparung 1M/Einheit gegenüber alter Anlage  \n"
+                "Break-Even bei 3 Einheiten/Quartal: ~1,7 Jahre | Zusatz-AfA: 4M/Jahr"
             )
             kann_kaufen = state.liquide_mittel >= 20.0
             if not kann_kaufen:
@@ -818,8 +825,8 @@ if schritt == 4:
     st.markdown("## 📦 Materialeinkauf")
 
     e1, e2, e3 = st.columns(3)
-    e1.metric("Rohmaterial auf Lager", f"{state.rohmaterial_lager:.0f} Lose")
-    e2.metric("Einkaufspreis", f"{state.einkaufspreis_material:.2f} M/Los")
+    e1.metric("Rohmaterial auf Lager", f"{state.rohmaterial_lager:.0f} Einheiten")
+    e2.metric("Einkaufspreis", f"{state.einkaufspreis_material:.2f} M/Einheit")
     e3.metric("Liquide Mittel", f"{state.liquide_mittel:.1f} M")
 
     if state.aktuelles_ereignis and state.aktuelles_ereignis["effekt_feld"] == "einkaufspreis_material":
@@ -829,7 +836,7 @@ if schritt == 4:
         else:
             st.success(f"Ereigniseffekt aktiv: Sonderangebot – nur {faktor:.0%} des Normalpreises!")
 
-    einkauf_menge = st.number_input("Bestellmenge (Lose)", min_value=0.0, step=1.0, key="s4_menge")
+    einkauf_menge = st.number_input("Bestellmenge (Einheiten)", min_value=0.0, step=1.0, key="s4_menge")
     if einkauf_menge > 0:
         st.caption(f"Gesamtkosten: **{einkauf_menge * state.einkaufspreis_material:.1f} M**")
 
@@ -838,7 +845,7 @@ if schritt == 4:
         if st.button("📦 Bestellen", type="primary", disabled=einkauf_menge <= 0):
             run_action_and_advance(
                 material_einkaufen, state, einkauf_menge,
-                success_message=f"{einkauf_menge:.0f} Lose Rohmaterial eingekauft.",
+                success_message=f"{einkauf_menge:.0f} Einheiten Rohmaterial eingekauft.",
             )
     with b_col2:
         if st.button("Kein Material bestellen →"):

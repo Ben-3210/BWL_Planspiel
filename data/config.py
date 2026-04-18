@@ -154,3 +154,9 @@ AFA_BGA_PRO_JAHR = 0.4               # 2M Startwert über 5 Jahre
 # =========================================================
 
 STEUERSATZ = 1 / 3                   # 1/3 des Gewinns vor Steuern
+
+# =========================================================
+# 11) Zahlungsbedingungen
+# =========================================================
+
+SOFORTZAHLUNG_SKONTO = 0.05          # 5% Skonto bei Sofortzahlung (vs. auf Ziel)

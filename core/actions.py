@@ -5,6 +5,7 @@ from data.config import (
     AFA_NEUE_ANLAGE_PRO_JAHR,
     MARKETING_NACHFRAGE_FAKTOR,
     MAX_UNFERTIGE_ERZEUGNISSE,
+    SOFORTZAHLUNG_SKONTO,
     STANDARD_GEMEINKOSTEN_AB_JAHR_2_PRO_QUARTAL,
     STANDARD_GEMEINKOSTEN_JAHR_1_PRO_QUARTAL,
     STANDARD_INVESTITION_NEUE_ANLAGE,
@@ -184,22 +185,25 @@ def produkte_verkaufen(state: GameState, menge_angebot: float, sofortzahlung: bo
         )
         return
 
-    umsatz = berechne_umsatz(tatsaechlich_verkauft, state.verkaufspreis)
+    umsatz_brutto = berechne_umsatz(tatsaechlich_verkauft, state.verkaufspreis)
     state.fertige_erzeugnisse -= tatsaechlich_verkauft
-    state.umsatz += umsatz
     state.absatzmenge_ist += tatsaechlich_verkauft
 
     if sofortzahlung:
-        state.liquide_mittel += umsatz
+        skonto = round(umsatz_brutto * SOFORTZAHLUNG_SKONTO, 2)
+        umsatz_netto = umsatz_brutto - skonto
+        state.liquide_mittel += umsatz_netto
+        state.umsatz += umsatz_netto
         state.log(
-            f"Verkauf (Sofortzahlung): {tatsaechlich_verkauft} von {int(menge_angebot)} Losen abgenommen "
-            f"(Nachfrage: {tatsaechliche_nachfrage}), Umsatz {umsatz:.2f} M."
+            f"Verkauf (Sofortzahlung, −{skonto:.2f} M Skonto): {tatsaechlich_verkauft} Elektromotoren abgenommen "
+            f"(Nachfrage: {tatsaechliche_nachfrage}), Umsatz netto {umsatz_netto:.2f} M."
         )
     else:
-        state.forderungen += umsatz
+        state.forderungen += umsatz_brutto
+        state.umsatz += umsatz_brutto
         state.log(
-            f"Verkauf (auf Ziel): {tatsaechlich_verkauft} von {int(menge_angebot)} Losen abgenommen "
-            f"(Nachfrage: {tatsaechliche_nachfrage}), {umsatz:.2f} M als Forderung gebucht."
+            f"Verkauf (auf Ziel): {tatsaechlich_verkauft} Elektromotoren abgenommen "
+            f"(Nachfrage: {tatsaechliche_nachfrage}), {umsatz_brutto:.2f} M als Forderung gebucht."
         )
 
 
