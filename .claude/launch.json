@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "factory-planspiel",
+      "runtimeExecutable": "streamlit",
+      "runtimeArgs": ["run", "app.py", "--server.headless=true"],
+      "port": 8502,
+      "autoPort": true
+    }
+  ]
+}
