@@ -41,6 +41,206 @@ def reset_game() -> None:
 state = get_state()
 
 
+# ─── INTRO-SCREEN ──────────────────────────────────────────────────────────────
+
+def zeige_intro() -> None:
+    st.title("🏭 Factory AG – Planspiel")
+    st.markdown("#### Ostfalia Hochschule · Fakultät Maschinenbau · SoSe 2026")
+    st.divider()
+
+    # ── Kontext ────────────────────────────────────────────────────────────────
+    st.markdown("## Das Unternehmen")
+
+    k1, k2 = st.columns([2, 1])
+
+    with k1:
+        st.markdown(
+            """
+            Du übernimmst die Geschäftsführung der **Factory AG** – einem mittelständischen
+            deutschen Maschinenbauunternehmen, spezialisiert auf die Fertigung von
+            **Elektromotoren für den Industriemarkt**.
+
+            Das Unternehmen produziert in zwei Fertigungsstufen:
+
+            - **Teilefertigung:** Motorkomponenten (Rotor, Stator, Wicklungen) werden gefertigt
+            - **Endmontage:** Die Komponenten werden zum fertigen Elektromotor zusammengesetzt und geprüft
+
+            Deine Aufgabe: Führe die Factory AG über **5 Jahre (20 Quartale)** möglichst
+            profitabel. Triff kluge Entscheidungen zu Preisen, Produktion, Einkauf und
+            Marketing – und reagiere auf unvorhergesehene Marktereignisse.
+            """
+        )
+
+    with k2:
+        st.markdown("**📊 Ausgangslage der Factory AG**")
+        st.markdown(
+            """
+            | Position | Wert |
+            |---|---|
+            | Eigenkapital | 67 M |
+            | Darlehen | 100 M |
+            | Kassenbestand | 45 M |
+            | Zinssatz | 10 % p.a. |
+            | Steuersatz | 33 % |
+            """
+        )
+
+    st.divider()
+
+    # ── Spielanleitung ─────────────────────────────────────────────────────────
+    st.markdown("## Spielanleitung")
+
+    tab1, tab2, tab3, tab4 = st.tabs(["📅 Spielablauf", "🎛️ Deine Stellschrauben", "📊 Ziel & Kennzahlen", "⚡ Ereignisse"])
+
+    with tab1:
+        st.markdown(
+            """
+            Das Spiel ist in **Quartale** unterteilt. Jedes Quartal läuft in **6 geführten Schritten** ab:
+
+            | Schritt | Aktion | Was passiert |
+            |---|---|---|
+            | 1 | 💰 **Forderungen einziehen** | Kunden begleichen ihre offenen Rechnungen aus dem Vorquartal |
+            | 2 | 🚚 **Elektromotoren verkaufen** | Verkaufspreis festlegen, optional Marketing buchen, Angebot aufgeben |
+            | 3 | 🏭 **Produktion** | Teilefertigung und/oder Endmontage durchführen |
+            | 4 | 📦 **Materialeinkauf** | Rohmaterial für die nächste Produktion bestellen |
+            | 5 | 📋 **Gemeinkosten zahlen** | Laufende Betriebskosten begleichen |
+            | 6 | ✅ **Quartal abschließen** | Im 4. Quartal: Jahresabschluss mit Zinsen, Abschreibungen und Steuern |
+
+            > **Wichtig:** Verkaufte Elektromotoren werden erst **im Folgequartal bezahlt** (Lieferung auf Ziel),
+            > außer du wählst die Option "Sofortzahlung" mit Abzug.
+            """
+        )
+
+    with tab2:
+        st.markdown("Du hast folgende Hebel, um das Unternehmen zu steuern:")
+
+        s1, s2 = st.columns(2)
+
+        with s1:
+            st.markdown(
+                """
+                **💰 Verkaufspreis**
+                Höherer Preis bedeutet weniger Nachfrage – das klassische Preis-Mengen-Dilemma.
+                Die Nachfrage schwankt außerdem zufällig um ±30%.
+
+                **📣 Marketing**
+                Mehr Marketingbudget schiebt die Nachfragekurve für dieses Quartal nach oben.
+                Kosten laufen aber sofort durch die GuV.
+
+                **🏭 Produktionsmenge**
+                Zu viel produzieren bindet Kapital im Lager. Zu wenig produzieren bedeutet
+                entgangenen Umsatz. Geschickte Planung ist entscheidend.
+                """
+            )
+
+        with s2:
+            st.markdown(
+                """
+                **📦 Einkaufsmenge**
+                Du entscheidest, wie viel Rohmaterial du pro Quartal bestellst.
+                Puffer aufbauen oder just-in-time? Beides hat Vor- und Nachteile.
+
+                **🏗️ Neue Anlage (ab Jahr 3)**
+                Für 20 M kannst du eine moderne einstufige Anlage kaufen, die Teilefertigung
+                und Endmontage zusammenführt und die Stückkosten senkt.
+
+                **🏦 Darlehen tilgen**
+                Jeder zurückgezahlte Euro spart 10% Zinsen im Jahr – aber bindet Liquidität.
+                """
+            )
+
+    with tab3:
+        st.markdown(
+            """
+            **Dein Ziel:** Baue das Eigenkapital der Factory AG über 5 Jahre möglichst stark aus.
+            Am Ende jedes Jahres werden folgende Kennzahlen berechnet und verfolgt:
+            """
+        )
+
+        z1, z2 = st.columns(2)
+
+        with z1:
+            st.markdown(
+                """
+                | Kennzahl | Formel | Richtwert |
+                |---|---|---|
+                | **ROS** (Umsatzrendite) | EBIT / Umsatz | ≥ 8% gut |
+                | **ROE** (EK-Rendite) | Gewinn / Eigenkapital | ≥ 10% gut |
+                | **ROI** | ROS × Kapitalumschlag | ≥ 6% gut |
+                | **GKR** | EBIT / Gesamtkapital | ≥ 6% gut |
+                """
+            )
+
+        with z2:
+            st.markdown(
+                """
+                | Kennzahl | Was sie zeigt | Richtwert |
+                |---|---|---|
+                | **Liquidität I** | Kasse / kurzfr. Verbindlichkeiten | ≥ 20% |
+                | **Liquidität II** | (Kasse + Ford.) / kurzfr. Verbindl. | ≥ 100% |
+                | **Working Capital** | UV − kurzfr. Verbindlichkeiten | positiv |
+                | **Cash Flow** | Gewinn + Abschreibungen | positiv |
+                """
+            )
+
+        st.info(
+            "💡 **Merke:** Das Unternehmen darf nie zahlungsunfähig werden. "
+            "Halte immer genügend Kasse – Zinsen und Gemeinkosten fallen unabhängig vom Umsatz an."
+        )
+
+    with tab4:
+        st.markdown(
+            """
+            Jedes Quartal kann ein **zufälliges Ereignis** eintreten, das einen Spielparameter
+            für genau dieses Quartal verändert. Das Ereignis wird zu Beginn des Quartals als
+            Banner angezeigt.
+            """
+        )
+
+        e1, e2 = st.columns(2)
+
+        with e1:
+            st.markdown("**📉 Mögliche Nachteile**")
+            st.markdown(
+                """
+                - ⛏️ **Rohstoffknappheit** – Einkaufspreise steigen um 50%
+                - 📉 **Konjunkturdelle** – Marktnachfrage sinkt um 25%
+                - 🤒 **Personalengpass** – Fertigungskosten steigen um 20%
+                - 🔧 **Maschinenstörung** – Fertigungskosten steigen um 30%
+                - 😤 **Großkundenabgang** – Nachfrage bricht um 30% ein
+                """
+            )
+
+        with e2:
+            st.markdown("**📈 Mögliche Vorteile**")
+            st.markdown(
+                """
+                - 🚀 **Nachfrageboom** – Marktnachfrage steigt um 30%
+                - 💰 **Rohstoff-Sonderangebot** – Einkaufspreise sinken um 25%
+                - ⚙️ **Prozessoptimierung** – Fertigungskosten sinken um 15%
+                - 🏆 **Exportauftrag** – Einmaliger Umsatzbonus
+                - ☀️ **Ruhiges Quartal** – Kein Ereignis
+                """
+            )
+
+        st.markdown(
+            "> Ereignisse laufen automatisch aus – du musst nichts zurücksetzen."
+        )
+
+    st.divider()
+
+    col_l, col_m, col_r = st.columns([1, 1, 1])
+    with col_m:
+        if st.button("▶ Spiel starten", type="primary", use_container_width=True):
+            st.session_state.intro_gesehen = True
+            st.rerun()
+
+
+if not st.session_state.get("intro_gesehen", False):
+    zeige_intro()
+    st.stop()
+
+
 # ─── HILFSFUNKTIONEN ───────────────────────────────────────────────────────────
 
 def run_action(action_func, *args, success_message: str | None = None, **kwargs) -> None:
@@ -311,6 +511,7 @@ with st.sidebar:
     st.divider()
     if st.button("↺ Spiel zurücksetzen", use_container_width=True):
         reset_game()
+        st.session_state.intro_gesehen = False
         st.rerun()
 
 
