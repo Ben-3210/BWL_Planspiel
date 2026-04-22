@@ -1,6 +1,10 @@
 import random
 
 from data.config import (
+    AFA_BGA_PRO_JAHR,
+    AFA_GEBAEUDE_PRO_JAHR,
+    AFA_MASCHINEN_PRO_JAHR,
+    AFA_NEUE_ANLAGE_PRO_JAHR,
     BASISNACHFRAGE_PRO_QUARTAL,
     BASISPREIS,
     EINKAUFSPREIS_ERWARTUNGSWERT,
@@ -68,6 +72,18 @@ def berechne_gewinn(
         - zinskosten
         - abschreibungen
     )
+
+
+def berechne_afa_vorschau(state) -> float:
+    """Berechnet die erwarteten Jahres-Abschreibungen (für Q4-Vorschau vor Jahresabschluss)."""
+    afa = (
+        min(AFA_GEBAEUDE_PRO_JAHR, state.av_gebaeude)
+        + min(AFA_MASCHINEN_PRO_JAHR, state.av_maschinen)
+        + min(AFA_BGA_PRO_JAHR, state.av_bga)
+    )
+    if state.neue_anlage_aktiv:
+        afa += AFA_NEUE_ANLAGE_PRO_JAHR
+    return afa
 
 
 def berechne_cashflow(gewinn: float, abschreibungen: float) -> float:

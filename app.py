@@ -15,6 +15,7 @@ from core.actions import (
     produkte_verkaufen,
 )
 from core.calculations import (
+    berechne_afa_vorschau,
     berechne_gewinn,
     berechne_kennzahlen,
     berechne_nachfrage,
@@ -158,31 +159,18 @@ def zeige_intro() -> None:
             """
         )
 
-        z1, z2 = st.columns(2)
-
-        with z1:
-            st.markdown(
-                """
-                | Kennzahl | Formel | Richtwert |
-                |---|---|---|
-                | **ROS** (Umsatzrendite) | EBIT / Umsatz | ≥ 8% gut |
-                | **ROE** (EK-Rendite) | Gewinn / Eigenkapital | ≥ 10% gut |
-                | **ROI** | ROS × Kapitalumschlag | ≥ 6% gut |
-                | **GKR** | EBIT / Gesamtkapital | ≥ 6% gut |
-                """
-            )
-
-        with z2:
-            st.markdown(
-                """
-                | Kennzahl | Was sie zeigt | Richtwert |
-                |---|---|---|
-                | **Liquidität I** | Kasse / kurzfr. Verbindlichkeiten | ≥ 20% |
-                | **Liquidität II** | (Kasse + Ford.) / kurzfr. Verbindl. | ≥ 100% |
-                | **Working Capital** | UV − kurzfr. Verbindlichkeiten | positiv |
-                | **Cash Flow** | Gewinn + Abschreibungen | positiv |
-                """
-            )
+        st.markdown(
+            """
+            | Kennzahl | Formel / Was sie zeigt | Richtwert |
+            |---|---|---|
+            | **ROS** (Umsatzrendite) | EBIT / Umsatz | ≥ 8% gut |
+            | **ROE** (EK-Rendite) | Gewinn / Eigenkapital | ≥ 10% gut |
+            | **ROI** | ROS × Kapitalumschlag | ≥ 6% gut |
+            | **GKR** | EBIT / Gesamtkapital | ≥ 6% gut |
+            | **Working Capital** | UV − kurzfr. Verbindlichkeiten | positiv |
+            | **Cash Flow** | Gewinn + Abschreibungen | positiv |
+            """
+        )
 
         st.info(
             "💡 **Merke:** Das Unternehmen darf nie zahlungsunfähig werden. "
@@ -431,11 +419,15 @@ with st.sidebar:
     _kpi_box("Umsatz", f"{kz['Umsatz']:.1f} M")
 
     e1, e2 = st.columns(2)
-    ebit_farbe = "#28a745" if kz["EBIT"] >= 0 else "#dc3545"
+    # In Q4 vor dem Jahresabschluss sind AfA noch nicht gebucht → für korrekte EBIT-Anzeige vorwegnehmen
+    ebit_anzeige = kz["EBIT"]
+    if state.quartal == 4 and not state.jahresabschluss_durchgefuehrt:
+        ebit_anzeige -= berechne_afa_vorschau(state)
+    ebit_farbe = "#28a745" if ebit_anzeige >= 0 else "#dc3545"
     gwn_farbe = "#28a745" if kz["Gewinn n. St."] >= 0 else "#dc3545"
     e1.markdown(
         f"<div style='font-size:0.72rem;color:#aaa'>EBIT</div>"
-        f"<div style='font-size:1.0rem;font-weight:700;color:{ebit_farbe}'>{kz['EBIT']:.1f} M</div>",
+        f"<div style='font-size:1.0rem;font-weight:700;color:{ebit_farbe}'>{ebit_anzeige:.1f} M</div>",
         unsafe_allow_html=True,
     )
     e2.markdown(
@@ -566,12 +558,16 @@ if schritt == 1:
             advance_schritt()
 
     with st.expander("Optionale Aktion: Darlehen tilgen"):
-        st.caption(f"Restschuld: {state.darlehen:.2f} M | Zinssatz: {state.zinssatz * 100:.0f}%")
-        tilgung = st.number_input(
-            "Tilgungsbetrag (M)", min_value=0.0, max_value=float(state.darlehen), step=5.0, key="s1_tilgung"
-        )
-        if st.button("Tilgen", disabled=tilgung <= 0):
-            run_action(darlehen_tilgen, state, tilgung, success_message=f"{tilgung:.2f} M getilgt.")
+        if state.tilgung_durchgefuehrt:
+            st.success("Tilgung durchgeführt.")
+        else:
+            st.caption(f"Restschuld: {state.darlehen:.2f} M | Zinssatz: {state.zinssatz * 100:.0f}%")
+            tilgung = st.number_input(
+                "Tilgungsbetrag (M)", min_value=0.0, max_value=float(state.darlehen), step=5.0, key="s1_tilgung"
+            )
+            if st.button("Tilgen", disabled=tilgung <= 0):
+                state.tilgung_durchgefuehrt = True
+                run_action(darlehen_tilgen, state, tilgung, success_message=f"{tilgung:.2f} M getilgt.")
 
 elif schritt > 1:
     with st.expander("✅ Forderungen einziehen"):
@@ -818,9 +814,7 @@ if schritt >= 6:
             st.warning("**Q4:** Führe zuerst den Jahresabschluss durch, bevor du ins neue Jahr wechselst.")
 
             zinsen_vorschau = berechne_zinskosten(state.darlehen, state.zinssatz)
-            afa_vorschau = min(1.0, state.av_gebaeude) + min(5.0, state.av_maschinen) + min(0.4, state.av_bga)
-            if state.neue_anlage_aktiv:
-                afa_vorschau += 4.0
+            afa_vorschau = berechne_afa_vorschau(state)
 
             ja_col1, ja_col2 = st.columns(2)
             ja_col1.metric("Zinsen (fällig)", f"{zinsen_vorschau:.2f} M")

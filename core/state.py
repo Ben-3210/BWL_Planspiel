@@ -115,6 +115,7 @@ class GameState:
     marketing_durchgefuehrt: bool = False
     stufe1_durchgefuehrt: bool = False
     stufe2_durchgefuehrt: bool = False
+    tilgung_durchgefuehrt: bool = False
     neue_unfertige_dieses_quartal: float = 0.0
 
     # -----------------------------
@@ -177,6 +178,7 @@ class GameState:
         self.marketing_durchgefuehrt = False
         self.stufe1_durchgefuehrt = False
         self.stufe2_durchgefuehrt = False
+        self.tilgung_durchgefuehrt = False
         self.neue_unfertige_dieses_quartal = 0.0
 
         # Neuen Einkaufspreis würfeln (vor Ereignis, damit Events ihn noch modifizieren können)
