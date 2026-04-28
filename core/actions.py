@@ -339,8 +339,6 @@ def jahresabschluss(state: GameState) -> None:
     kz = berechne_kennzahlen(state)
     state.kennzahlen_history.append(kz)
 
-    # --- Periodenwerte für nächstes Jahr zurücksetzen ---
-    state.reset_periodenwerte()
     state.jahresabschluss_durchgefuehrt = True
     state.log(f"Jahresabschluss Jahr {state.jahr} abgeschlossen.")
 

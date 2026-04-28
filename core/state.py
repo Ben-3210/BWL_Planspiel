@@ -167,6 +167,7 @@ class GameState:
         else:
             self.quartal = 1
             self.jahr += 1
+            self.reset_periodenwerte()
 
         self.runde += 1
 
